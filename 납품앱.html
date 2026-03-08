@@ -1580,13 +1580,11 @@ function launchNaviOne(name) {
   const addr = encodeURIComponent(c.address);
   const ename = encodeURIComponent(c.name);
   if (naviAppType === 'tmap') {
-    // 티맵: 웹에서 주소 검색 → 모바일에서 앱 연동
-    window.open(`https://tmap.life/?query=${addr}`, '_blank');
+    location.href = `tmap://route?goalname=${ename}&goaladdr=${addr}`;
   } else if (naviAppType === 'naver') {
     window.open(`https://map.naver.com/v5/search/${addr}`, '_blank');
   } else if (naviAppType === 'kakao') {
-    // 다음지도: 주소 검색
-    window.open(`https://map.kakao.com/?q=${addr}`, '_blank');
+    window.open(`https://map.kakao.com/link/to/${ename},${addr}`, '_blank');
   }
 }
 
