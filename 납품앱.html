@@ -571,7 +571,11 @@
       <button id="add-type-long" class="btn btn-sm" style="flex:1;background:#fff;color:#6b7280;border:2px solid #d1d5db;" onclick="selectAddType('long')">🛣️ 장거리</button>
     </div>
     <button class="btn btn-success btn-full" style="margin-bottom:8px;" onclick="addClient()">추가</button>
-    <div id="client-list"></div>
+    <div style="display:flex;gap:6px;margin-bottom:4px;">
+      <button class="btn btn-sm" style="flex:1;background:#dbeafe;color:#1e40af;border:1px solid #1e40af;" onclick="openClientListModal('short')">🏙️ 단거리 거래처 보기</button>
+      <button class="btn btn-sm" style="flex:1;background:#fef9c3;color:#854d0e;border:1px solid #854d0e;" onclick="openClientListModal('long')">🛣️ 장거리 거래처 보기</button>
+    </div>
+    <div id="client-list" style="display:none;"></div>
     <div style="display:flex;gap:6px;margin-top:10px;">
       <button class="btn btn-primary" style="flex:1;font-size:0.8rem;" onclick="exportClients()">⬇️ 거래처 내보내기</button>
       <label class="btn btn-light" style="flex:1;font-size:0.8rem;text-align:center;cursor:pointer;margin:0;">
@@ -649,6 +653,17 @@
         <button class="btn btn-danger btn-full" onclick="closeModal('dev-menu-modal');confirmReset();">전체 데이터 초기화</button>
       </div>
       <button class="btn btn-light btn-full" onclick="closeModal('dev-menu-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 거래처 목록 팝업 -->
+<div class="modal-overlay" id="client-list-modal">
+  <div class="modal-box" style="max-height:80vh;display:flex;flex-direction:column;">
+    <div class="modal-title" id="client-list-modal-title"></div>
+    <div id="client-list-modal-body" style="overflow-y:auto;flex:1;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-light btn-full" onclick="closeModal('client-list-modal')">닫기</button>
     </div>
   </div>
 </div>
@@ -1280,6 +1295,32 @@ function importClients(event) {
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+
+function openClientListModal(type) {
+  const isLong = type === 'long';
+  const title = isLong ? '🛣️ 장거리 거래처' : '🏙️ 단거리 거래처';
+  const clients = state.clients.filter(c => (c.type || 'short') === type);
+  document.getElementById('client-list-modal-title').textContent = title;
+  if (!clients.length) {
+    document.getElementById('client-list-modal-body').innerHTML =
+      `<div style="text-align:center;color:#9ca3af;padding:20px 0;">등록된 거래처가 없습니다.</div>`;
+  } else {
+    document.getElementById('client-list-modal-body').innerHTML = clients.map((c, idx) => `
+      <div style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
+        <div style="font-size:0.9rem;font-weight:700;margin-bottom:4px;">${esc(c.name)}</div>
+        ${c.address ? `<div style="font-size:0.82rem;color:#374151;margin-bottom:3px;display:flex;align-items:center;gap:6px;">📍 ${esc(c.address)} <button onclick="openNaverMap('${esc(c.address)}')" style="font-size:0.72rem;padding:2px 8px;border-radius:10px;border:1px solid #0369a1;background:#e0f2fe;color:#0369a1;cursor:pointer;white-space:nowrap;">🗺️지도</button></div>` : ''}
+        ${c.memo  ? `<div style="font-size:0.82rem;color:#374151;margin-bottom:3px;">📝 ${esc(c.memo)}</div>` : ''}
+        ${c.pass  ? `<div style="font-size:0.82rem;color:#92400e;">🔒 비번: <span id="modal-pass-${idx}" style="filter:blur(4px);cursor:pointer;transition:filter 0.2s;" onclick="toggleModalPass(${idx})">${esc(c.pass)}</span> <span style="font-size:0.72rem;color:#b45309;">(탭해서 확인)</span></div>` : ''}
+      </div>
+    `).join('');
+  }
+  document.getElementById('client-list-modal').classList.add('open');
+}
+
+function toggleModalPass(idx) {
+  const el = document.getElementById(`modal-pass-${idx}`);
+  if (el) el.style.filter = el.style.filter ? '' : 'blur(4px)';
 }
 
 function openNaverMap(address) {
