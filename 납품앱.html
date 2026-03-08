@@ -384,9 +384,8 @@
       </div>
       <div>
         <label>거래처</label>
-        <select id="sel-client" onchange="handleClientChange()">
-          <option value="">-- 거래처 --</option>
-        </select>
+        <button id="sel-client-btn" onclick="openSelectClientModal()" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;background:#fff;text-align:left;font-size:0.85rem;color:#374151;cursor:pointer;">-- 거래처 선택 --</button>
+        <input type="hidden" id="sel-client" value="" />
       </div>
     </div>
     <div class="form-row" id="new-client-row" style="display:none;">
@@ -656,6 +655,20 @@
         <button class="btn btn-danger btn-full" onclick="closeModal('dev-menu-modal');confirmReset();">전체 데이터 초기화</button>
       </div>
       <button class="btn btn-light btn-full" onclick="closeModal('dev-menu-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 거래처 선택 팝업 -->
+<div class="modal-overlay" id="select-client-modal">
+  <div class="modal-box" style="max-height:80vh;display:flex;flex-direction:column;">
+    <div class="modal-title">거래처 선택</div>
+    <div style="margin-bottom:8px;">
+      <input type="text" id="select-client-search" placeholder="🔍 거래처명 검색" oninput="renderSelectClientModal()" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
+    </div>
+    <div id="select-client-body" style="overflow-y:auto;flex:1;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-light btn-full" onclick="closeModal('select-client-modal')">취소</button>
     </div>
   </div>
 </div>
@@ -984,16 +997,7 @@ function addManualItem() {
 ═══════════════════════════════════ */
 function saveDelivery() {
   const date   = document.getElementById('sel-date').value;
-  let client   = document.getElementById('sel-client').value;
-  const newCli = document.getElementById('new-client-input').value.trim();
-  if (client === '__new__') {
-    if (!newCli) { toast('거래처명을 입력하세요.'); return; }
-    client = newCli;
-    if (!state.clients.find(c => c.name === client)) state.clients.push({ name: client, address: '' });
-    document.getElementById('new-client-input').value = '';
-    renderClientSelects();
-    renderHistoryClientFilter();
-  }
+  let client = document.getElementById('sel-client').value;
   if (!client) { toast('거래처를 선택하세요.'); return; }
   if (!state.pendingItems || !state.pendingItems.length) { toast('품목이 없습니다.'); return; }
 
@@ -1012,7 +1016,10 @@ function saveDelivery() {
   setGeminiStatus('');
   saveState();
   renderParsedPreview();
-  renderClientSelects();
+  // 거래처 선택 초기화
+  document.getElementById('sel-client').value = '';
+  const btn = document.getElementById('sel-client-btn');
+  if (btn) { btn.textContent = '-- 거래처 선택 --'; btn.style.color = '#9ca3af'; }
   toast(`${client} 납품건 저장됨`);
   if (gdriveToken) gdriveBackup(true);
 }
@@ -1021,14 +1028,16 @@ function saveDelivery() {
    거래처
 ═══════════════════════════════════ */
 function renderClientSelects() {
-  const opts = state.clients.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
-  document.getElementById('sel-client').innerHTML =
-    `<option value="">-- 거래처 --</option>${opts}<option value="__new__">+ 새 거래처</option>`;
+  // hidden input 초기화 (팝업 방식으로 대체됨)
+  const btn = document.getElementById('sel-client-btn');
+  if (btn && !document.getElementById('sel-client').value) {
+    btn.textContent = '-- 거래처 선택 --';
+    btn.style.color = '#9ca3af';
+  }
 }
 
 function handleClientChange() {
-  const v = document.getElementById('sel-client').value;
-  document.getElementById('new-client-row').style.display = v === '__new__' ? '' : 'none';
+  // 팝업 방식으로 대체 - 미사용
 }
 
 let addClientType = 'short';
@@ -1303,6 +1312,39 @@ function importClients(event) {
 }
 
 let currentModalType = 'short';
+
+function openSelectClientModal() {
+  document.getElementById('select-client-search').value = '';
+  renderSelectClientModal();
+  document.getElementById('select-client-modal').classList.add('open');
+}
+
+function renderSelectClientModal() {
+  const q = document.getElementById('select-client-search').value.trim().toLowerCase();
+  const shorts = state.clients.filter(c => (c.type||'short') === 'short' && (!q || c.name.toLowerCase().includes(q)));
+  const longs  = state.clients.filter(c => c.type === 'long' && (!q || c.name.toLowerCase().includes(q)));
+  const body   = document.getElementById('select-client-body');
+
+  const renderGroup = (list, label, color) => {
+    if (!list.length) return '';
+    const items = list.map(c => `
+      <div onclick="selectClient('${esc(c.name)}')" style="padding:10px 8px;border-bottom:1px solid #f3f4f6;cursor:pointer;border-radius:6px;" onmouseover="this.style.background='#f0f9ff'" onmouseout="this.style.background=''">
+        <div style="font-size:0.88rem;font-weight:600;">${esc(c.name)}</div>
+        ${c.address ? `<div style="font-size:0.75rem;color:#6b7280;">📍 ${esc(c.address)}</div>` : ''}
+      </div>`).join('');
+    return `<div style="font-size:0.75rem;font-weight:700;color:${color};padding:6px 0 2px;">${label}</div>${items}`;
+  };
+
+  const html = renderGroup(shorts, '🏙️ 단거리', '#1e40af') + renderGroup(longs, '🛣️ 장거리', '#854d0e');
+  body.innerHTML = html || `<div style="text-align:center;color:#9ca3af;padding:20px 0;">검색 결과가 없습니다.</div>`;
+}
+
+function selectClient(name) {
+  document.getElementById('sel-client').value = name;
+  document.getElementById('sel-client-btn').textContent = name;
+  document.getElementById('sel-client-btn').style.color = '#111';
+  closeModal('select-client-modal');
+}
 
 function openClientListModal(type) {
   currentModalType = type;
