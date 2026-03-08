@@ -553,17 +553,21 @@
   <!-- 거래처 관리 -->
   <div class="card">
     <div class="card-title">🏪 거래처 관리</div>
-    <div class="row2" style="margin-bottom:6px;">
-      <input type="text" id="client-add-input" placeholder="거래처명" />
-      <button class="btn btn-success" onclick="addClient()">추가</button>
+    <div style="margin-bottom:6px;">
+      <input type="text" id="client-add-input" placeholder="거래처명" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
     </div>
     <div style="margin-bottom:6px;">
       <input type="text" id="client-add-address" placeholder="주소 (예: 부산시 해운대구 ...)" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
+    </div>
+    <div style="position:relative;margin-bottom:6px;">
+      <input type="password" id="client-add-memo" placeholder="📝 메모 (비번, 배송방식 등)" style="width:100%;font-size:0.85rem;padding:6px 36px 6px 10px;border:1px solid #fbbf24;border-radius:8px;background:#fffbeb;" />
+      <button onclick="toggleAddMemo()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.9rem;">👁️</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:8px;">
       <button id="add-type-short" class="btn btn-sm" style="flex:1;background:#dbeafe;color:#1e40af;border:2px solid #1e40af;font-weight:700;" onclick="selectAddType('short')">🏙️ 단거리</button>
       <button id="add-type-long" class="btn btn-sm" style="flex:1;background:#fff;color:#6b7280;border:2px solid #d1d5db;" onclick="selectAddType('long')">🛣️ 장거리</button>
     </div>
+    <button class="btn btn-success btn-full" style="margin-bottom:8px;" onclick="addClient()">추가</button>
     <div id="client-list"></div>
     <div style="display:flex;gap:6px;margin-top:10px;">
       <button class="btn btn-primary" style="flex:1;font-size:0.8rem;" onclick="exportClients()">⬇️ 거래처 내보내기</button>
@@ -1018,12 +1022,18 @@ function selectAddType(t) {
   document.getElementById('add-type-long').style.borderColor = t === 'long' ? '#854d0e' : '#d1d5db';
 }
 
+function toggleAddMemo() {
+  const el = document.getElementById('client-add-memo');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
 function addClient() {
   const name = document.getElementById('client-add-input').value.trim();
   const address = document.getElementById('client-add-address').value.trim();
-  if (!name) return;
+  const memo = document.getElementById('client-add-memo').value.trim();
+  if (!name) { toast('거래처명을 입력하세요.'); return; }
   if (!state.clients.find(c => c.name === name)) {
-    state.clients.push({ name, address, memo: '', type: addClientType });
+    state.clients.push({ name, address, memo, type: addClientType });
     saveState();
     renderClientSelects();
     renderClientList();
@@ -1031,7 +1041,10 @@ function addClient() {
     renderHistoryClientFilter();
     document.getElementById('client-add-input').value = '';
     document.getElementById('client-add-address').value = '';
+    document.getElementById('client-add-memo').value = '';
     toast('거래처 추가됨');
+  } else {
+    toast('이미 있는 거래처입니다.');
   }
 }
 
