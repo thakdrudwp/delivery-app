@@ -559,9 +559,12 @@
     <div style="margin-bottom:6px;">
       <input type="text" id="client-add-address" placeholder="주소 (예: 부산시 해운대구 ...)" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
     </div>
+    <div style="margin-bottom:6px;">
+      <input type="text" id="client-add-memo" placeholder="📝 메모 (배송방식, 특이사항 등)" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
+    </div>
     <div style="position:relative;margin-bottom:6px;">
-      <input type="password" id="client-add-memo" placeholder="📝 메모 (비번, 배송방식 등)" style="width:100%;font-size:0.85rem;padding:6px 36px 6px 10px;border:1px solid #fbbf24;border-radius:8px;background:#fffbeb;" />
-      <button onclick="toggleAddMemo()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.9rem;">👁️</button>
+      <input type="password" id="client-add-pass" placeholder="🔒 비번 (출입번호 등)" style="width:100%;font-size:0.85rem;padding:6px 36px 6px 10px;border:1px solid #fbbf24;border-radius:8px;background:#fffbeb;" />
+      <button onclick="toggleAddPass()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.9rem;">👁️</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:8px;">
       <button id="add-type-short" class="btn btn-sm" style="flex:1;background:#dbeafe;color:#1e40af;border:2px solid #1e40af;font-weight:700;" onclick="selectAddType('short')">🏙️ 단거리</button>
@@ -693,9 +696,9 @@ let state = {
   apiKey: '',
   geminiKey: '',
   clients: [
-    { name: '마트A', address: '', memo: '', type: 'short' },
-    { name: '마트B', address: '', memo: '', type: 'short' },
-    { name: '식당C', address: '', memo: '', type: 'short' },
+    { name: '마트A', address: '', memo: '', pass: '', type: 'short' },
+    { name: '마트B', address: '', memo: '', pass: '', type: 'short' },
+    { name: '식당C', address: '', memo: '', pass: '', type: 'short' },
   ],
   deliveries: [],     // 진행중 납품건
   history: [],        // 완료된 납품건
@@ -717,8 +720,8 @@ function loadState() {
       if (state.clients.length && typeof state.clients[0] === 'string') {
         state.clients = state.clients.map(c => ({ name: c, address: '', memo: '' }));
       }
-      // memo, type 필드 없는 기존 객체 마이그레이션
-      state.clients = state.clients.map(c => ({ memo: '', type: 'short', ...c }));
+      // memo, pass, type 필드 없는 기존 객체 마이그레이션
+      state.clients = state.clients.map(c => ({ memo: '', pass: '', type: 'short', ...c }));
     }
   } catch(e) {}
 }
@@ -1022,18 +1025,19 @@ function selectAddType(t) {
   document.getElementById('add-type-long').style.borderColor = t === 'long' ? '#854d0e' : '#d1d5db';
 }
 
-function toggleAddMemo() {
-  const el = document.getElementById('client-add-memo');
+function toggleAddPass() {
+  const el = document.getElementById('client-add-pass');
   el.type = el.type === 'password' ? 'text' : 'password';
 }
 
 function addClient() {
-  const name = document.getElementById('client-add-input').value.trim();
+  const name    = document.getElementById('client-add-input').value.trim();
   const address = document.getElementById('client-add-address').value.trim();
-  const memo = document.getElementById('client-add-memo').value.trim();
+  const memo    = document.getElementById('client-add-memo').value.trim();
+  const pass    = document.getElementById('client-add-pass').value.trim();
   if (!name) { toast('거래처명을 입력하세요.'); return; }
   if (!state.clients.find(c => c.name === name)) {
-    state.clients.push({ name, address, memo, type: addClientType });
+    state.clients.push({ name, address, memo, pass, type: addClientType });
     saveState();
     renderClientSelects();
     renderClientList();
@@ -1042,6 +1046,7 @@ function addClient() {
     document.getElementById('client-add-input').value = '';
     document.getElementById('client-add-address').value = '';
     document.getElementById('client-add-memo').value = '';
+    document.getElementById('client-add-pass').value = '';
     toast('거래처 추가됨');
   } else {
     toast('이미 있는 거래처입니다.');
@@ -1085,13 +1090,13 @@ function clientRow(c, i) {
         <input type="text" id="client-addr-${i}" value="${esc(c.address||'')}" placeholder="주소 (예: 부산시 해운대구 ...)" style="flex:1;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;" />
         <button class="btn btn-sm" style="background:#dcfce7;color:#166534;font-size:0.75rem;white-space:nowrap;" onclick="saveClientField(${i})">저장</button>
       </div>
-      <div style="display:flex;gap:4px;align-items:center;">
-        <div style="position:relative;flex:1;">
-          <input type="password" id="client-memo-${i}" value="${esc(c.memo||'')}" placeholder="📝 메모 (비번, 배송방식 등)" style="width:100%;font-size:0.8rem;padding:4px 32px 4px 8px;border:1px solid #fbbf24;border-radius:6px;background:#fffbeb;" />
-          <button onclick="toggleMemoVisibility(${i})" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.85rem;" id="memo-eye-${i}">👁️</button>
-        </div>
+      <div style="margin-bottom:4px;">
+        <input type="text" id="client-memo-${i}" value="${esc(c.memo||'')}" placeholder="📝 메모 (배송방식, 특이사항 등)" style="width:100%;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;" />
       </div>
-      ${c.memo ? `<div style="font-size:0.72rem;color:#92400e;margin-top:2px;">🔒 메모 있음 — 👁️ 눌러서 확인</div>` : ''}
+      <div style="position:relative;">
+        <input type="password" id="client-pass-${i}" value="${esc(c.pass||'')}" placeholder="🔒 비번 (출입번호 등)" style="width:100%;font-size:0.8rem;padding:4px 32px 4px 8px;border:1px solid #fbbf24;border-radius:6px;background:#fffbeb;" />
+        <button onclick="togglePassVisibility(${i})" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.85rem;" id="pass-eye-${i}">👁️</button>
+      </div>
     </div>
   `;
 }
@@ -1116,9 +1121,9 @@ function revealDetailMemo() {
   }
 }
 
-function toggleMemoVisibility(i) {
-  const input = document.getElementById(`client-memo-${i}`);
-  const eye = document.getElementById(`memo-eye-${i}`);
+function togglePassVisibility(i) {
+  const input = document.getElementById(`client-pass-${i}`);
+  const eye   = document.getElementById(`pass-eye-${i}`);
   if (input.type === 'password') {
     input.type = 'text';
     eye.textContent = '🙈';
@@ -1132,6 +1137,8 @@ function saveClientField(i) {
   state.clients[i].address = document.getElementById(`client-addr-${i}`).value.trim();
   const memoEl = document.getElementById(`client-memo-${i}`);
   if (memoEl) state.clients[i].memo = memoEl.value.trim();
+  const passEl = document.getElementById(`client-pass-${i}`);
+  if (passEl) state.clients[i].pass = passEl.value.trim();
   saveState();
   renderClientList();
   renderNaviClientList();
@@ -1400,15 +1407,25 @@ function renderDetail() {
     }
   }
   if (memoArea) {
-    if (clientObj && clientObj.memo) {
+    const hasMemo = clientObj && clientObj.memo;
+    const hasPass = clientObj && clientObj.pass;
+    if (hasMemo || hasPass) {
       memoArea.style.display = '';
       memoArea.innerHTML = `
         <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;padding:7px 10px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
-            <span style="font-size:0.78rem;font-weight:700;color:#92400e;">🔒 메모</span>
-            <button onclick="revealDetailMemo()" id="memo-reveal-btn" style="font-size:0.72rem;padding:2px 8px;border-radius:10px;border:1px solid #fbbf24;background:#fef3c7;color:#92400e;cursor:pointer;">👁️ 탭해서 확인</button>
-          </div>
-          <div id="detail-memo-text" style="font-size:0.85rem;color:#78350f;filter:blur(5px);transition:filter 0.2s;user-select:none;">${esc(clientObj.memo)}</div>
+          ${hasMemo ? `
+          <div style="margin-bottom:${hasPass?'6px':'0'};">
+            <span style="font-size:0.75rem;font-weight:700;color:#92400e;">📝 메모</span>
+            <div style="font-size:0.85rem;color:#78350f;margin-top:2px;">${esc(clientObj.memo)}</div>
+          </div>` : ''}
+          ${hasPass ? `
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:0.75rem;font-weight:700;color:#92400e;">🔒 비번</span>
+              <button onclick="revealDetailMemo()" id="memo-reveal-btn" style="font-size:0.72rem;padding:2px 8px;border-radius:10px;border:1px solid #fbbf24;background:#fef3c7;color:#92400e;cursor:pointer;">👁️ 확인</button>
+            </div>
+            <div id="detail-memo-text" style="font-size:0.85rem;color:#78350f;filter:blur(5px);transition:filter 0.2s;user-select:none;margin-top:2px;">${esc(clientObj.pass)}</div>
+          </div>` : ''}
         </div>`;
     } else {
       memoArea.style.display = 'none';
