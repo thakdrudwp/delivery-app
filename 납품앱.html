@@ -1297,30 +1297,78 @@ function importClients(event) {
   event.target.value = '';
 }
 
+let currentModalType = 'short';
+
 function openClientListModal(type) {
-  const isLong = type === 'long';
-  const title = isLong ? '🛣️ 장거리 거래처' : '🏙️ 단거리 거래처';
-  const clients = state.clients.filter(c => (c.type || 'short') === type);
-  document.getElementById('client-list-modal-title').textContent = title;
-  if (!clients.length) {
-    document.getElementById('client-list-modal-body').innerHTML =
-      `<div style="text-align:center;color:#9ca3af;padding:20px 0;">등록된 거래처가 없습니다.</div>`;
-  } else {
-    document.getElementById('client-list-modal-body').innerHTML = clients.map((c, idx) => `
-      <div style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
-        <div style="font-size:0.9rem;font-weight:700;margin-bottom:4px;">${esc(c.name)}</div>
-        ${c.address ? `<div style="font-size:0.82rem;color:#374151;margin-bottom:3px;display:flex;align-items:center;gap:6px;">📍 ${esc(c.address)} <button onclick="openNaverMap('${esc(c.address)}')" style="font-size:0.72rem;padding:2px 8px;border-radius:10px;border:1px solid #0369a1;background:#e0f2fe;color:#0369a1;cursor:pointer;white-space:nowrap;">🗺️지도</button></div>` : ''}
-        ${c.memo  ? `<div style="font-size:0.82rem;color:#374151;margin-bottom:3px;">📝 ${esc(c.memo)}</div>` : ''}
-        ${c.pass  ? `<div style="font-size:0.82rem;color:#92400e;">🔒 비번: <span id="modal-pass-${idx}" style="filter:blur(4px);cursor:pointer;transition:filter 0.2s;" onclick="toggleModalPass(${idx})">${esc(c.pass)}</span> <span style="font-size:0.72rem;color:#b45309;">(탭해서 확인)</span></div>` : ''}
-      </div>
-    `).join('');
-  }
+  currentModalType = type;
+  document.getElementById('client-list-modal-title').textContent = type === 'long' ? '🛣️ 장거리 거래처' : '🏙️ 단거리 거래처';
+  renderClientListModal();
   document.getElementById('client-list-modal').classList.add('open');
 }
 
-function toggleModalPass(idx) {
-  const el = document.getElementById(`modal-pass-${idx}`);
+function renderClientListModal() {
+  const clients = state.clients.map((c, i) => ({ c, i })).filter(({ c }) => (c.type || 'short') === currentModalType);
+  const body = document.getElementById('client-list-modal-body');
+  if (!clients.length) {
+    body.innerHTML = `<div style="text-align:center;color:#9ca3af;padding:20px 0;">등록된 거래처가 없습니다.</div>`;
+    return;
+  }
+  body.innerHTML = clients.map(({ c, i }) => `
+    <div style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
+      <div id="modal-view-${i}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:0.9rem;font-weight:700;">${esc(c.name)}</span>
+          <button onclick="enableModalEdit(${i})" style="font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;cursor:pointer;">✏️ 편집</button>
+        </div>
+        ${c.address ? `<div style="font-size:0.82rem;color:#374151;margin-bottom:3px;display:flex;align-items:center;gap:6px;">📍 ${esc(c.address)} <button onclick="openNaverMap('${esc(c.address)}')" style="font-size:0.72rem;padding:2px 8px;border-radius:10px;border:1px solid #0369a1;background:#e0f2fe;color:#0369a1;cursor:pointer;white-space:nowrap;">🗺️지도</button></div>` : ''}
+        ${c.memo ? `<div style="font-size:0.82rem;color:#374151;margin-bottom:3px;">📝 ${esc(c.memo)}</div>` : ''}
+        ${c.pass ? `<div style="font-size:0.82rem;color:#92400e;">🔒 비번: <span id="modal-pass-${i}" style="filter:blur(4px);cursor:pointer;transition:filter 0.2s;" onclick="toggleModalPass(${i})">${esc(c.pass)}</span> <span style="font-size:0.72rem;color:#b45309;">(탭해서 확인)</span></div>` : ''}
+        ${!c.address && !c.memo && !c.pass ? `<div style="font-size:0.8rem;color:#9ca3af;">등록된 정보가 없습니다.</div>` : ''}
+      </div>
+      <div id="modal-edit-${i}" style="display:none;">
+        <div style="font-size:0.9rem;font-weight:700;margin-bottom:6px;">${esc(c.name)}</div>
+        <input type="text" id="modal-addr-${i}" value="${esc(c.address||'')}" placeholder="📍 주소" style="width:100%;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:4px;" />
+        <input type="text" id="modal-memo-${i}" value="${esc(c.memo||'')}" placeholder="📝 메모" style="width:100%;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:4px;" />
+        <div style="position:relative;margin-bottom:6px;">
+          <input type="password" id="modal-pass-input-${i}" value="${esc(c.pass||'')}" placeholder="🔒 비번" style="width:100%;font-size:0.8rem;padding:4px 32px 4px 8px;border:1px solid #fbbf24;border-radius:6px;background:#fffbeb;" />
+          <button onclick="toggleModalPassInput(${i})" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;">👁️</button>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-sm" style="flex:1;background:#dcfce7;color:#166534;" onclick="saveModalClientField(${i})">저장</button>
+          <button class="btn btn-sm" style="flex:1;background:#f3f4f6;color:#374151;" onclick="cancelModalEdit(${i})">취소</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function enableModalEdit(i) {
+  document.getElementById(`modal-view-${i}`).style.display = 'none';
+  document.getElementById(`modal-edit-${i}`).style.display = '';
+}
+
+function cancelModalEdit(i) {
+  document.getElementById(`modal-edit-${i}`).style.display = 'none';
+  document.getElementById(`modal-view-${i}`).style.display = '';
+}
+
+function saveModalClientField(i) {
+  state.clients[i].address = document.getElementById(`modal-addr-${i}`).value.trim();
+  state.clients[i].memo    = document.getElementById(`modal-memo-${i}`).value.trim();
+  state.clients[i].pass    = document.getElementById(`modal-pass-input-${i}`).value.trim();
+  saveState();
+  renderClientListModal();
+  toast('저장됨');
+}
+
+function toggleModalPass(i) {
+  const el = document.getElementById(`modal-pass-${i}`);
   if (el) el.style.filter = el.style.filter ? '' : 'blur(4px)';
+}
+
+function toggleModalPassInput(i) {
+  const el = document.getElementById(`modal-pass-input-${i}`);
+  el.type = el.type === 'password' ? 'text' : 'password';
 }
 
 function openNaverMap(address) {
