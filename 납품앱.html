@@ -771,6 +771,10 @@ let state = {
 };
 
 const STORAGE_KEY = 'delivery_app_v3';
+function localDateStr(d) {
+  const t = d || new Date();
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+}
 
 function loadState() {
   try {
@@ -796,9 +800,11 @@ function saveState() {
 window.addEventListener('DOMContentLoaded', () => {
   loadState();
 
-  const today = new Date().toISOString().slice(0,10);
-  document.getElementById('sel-date').value = today;
-  document.getElementById('hdr-date').textContent = today;
+  const todayObj = new Date();
+  document.getElementById('sel-date').value = localDateStr();
+  const days = ['일','월','화','수','목','금','토'];
+  const dow = days[todayObj.getDay()];
+  document.getElementById('hdr-date').textContent = `${todayObj.getFullYear()}.${String(todayObj.getMonth()+1).padStart(2,'0')}.${String(todayObj.getDate()).padStart(2,'0')} (${dow})`;
 
   if (state.geminiKey) document.getElementById('gemini-key-input').value = state.geminiKey;
   if (state.apiKey && state.geminiKey) {
@@ -1051,7 +1057,7 @@ function saveDelivery() {
   const btn = document.getElementById('sel-client-btn');
   if (btn) { btn.textContent = '-- 거래처 선택 --'; btn.style.color = '#9ca3af'; }
   // 날짜 오늘로 재설정
-  document.getElementById('sel-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('sel-date').value = localDateStr();
   toast(`${client} 납품건 저장됨`);
   if (gdriveToken) gdriveBackup(true);
 }
@@ -1266,7 +1272,7 @@ function exportAllData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `납품앱_전체백업_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `납품앱_전체백업_${localDateStr()}.json`;
   a.click();
   URL.revokeObjectURL(url);
   toast('전체 데이터 내보내기 완료');
@@ -1309,7 +1315,7 @@ function exportClients() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `거래처_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `거래처_${localDateStr()}.json`;
   a.click();
   URL.revokeObjectURL(url);
   toast('거래처 내보내기 완료');
@@ -1591,7 +1597,7 @@ function filterDeliveries(mode) {
 }
 
 function renderDeliveryList() {
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr();
   const mode  = state.filterMode || 'today';
   let list    = [...state.deliveries];
 
@@ -2092,7 +2098,7 @@ function exportCSV() {
 }
 
 function exportTodayCSV() {
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr();
   const rows  = [['날짜','거래처','품명','수량','단위','상차','하차']];
   [...state.deliveries, ...state.history].filter(h => h.date === today).forEach(h => {
     h.items.forEach(i => rows.push([h.date, h.client, i.name, i.qty, i.unit, i.loaded, i.unloaded]));
@@ -2187,7 +2193,7 @@ function addMoreCapture() {
    통계
 ═══════════════════════════════════ */
 function renderStats() {
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr();
   const todayAll = [...state.deliveries, ...state.history].filter(d => d.date === today);
   const clients = [...new Set(todayAll.map(d => d.client))].length;
   const totalItems = todayAll.reduce((s,d) => s + d.items.reduce((a,i) => a + i.qty, 0), 0);
