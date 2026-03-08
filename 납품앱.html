@@ -1584,7 +1584,7 @@ function launchNaviOne(name) {
   } else if (naviAppType === 'naver') {
     window.open(`https://map.naver.com/v5/search/${addr}`, '_blank');
   } else if (naviAppType === 'kakao') {
-    window.open(`https://map.kakao.com/link/to/${ename},${addr}`, '_blank');
+    window.open(`https://map.kakao.com/?q=${addr}`, '_blank');
   }
 }
 
