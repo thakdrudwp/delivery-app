@@ -659,6 +659,36 @@
   </div>
 </div>
 
+<!-- 네비게이션 앱 선택 팝업 -->
+<div class="modal-overlay" id="navi-select-modal">
+  <div class="modal-box">
+    <div class="modal-title">🧭 네비게이션 선택</div>
+    <div id="navi-waypoint-list" style="margin-bottom:12px;max-height:200px;overflow-y:auto;"></div>
+    <div style="font-size:0.78rem;color:#6b7280;margin-bottom:10px;">티맵: 전체 경로 한 번에 / 네이버·카카오: 순서대로 하나씩</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-primary btn-full" onclick="launchNavi('tmap')">🗺️ 티맵으로 시작</button>
+      <button class="btn btn-light btn-full" onclick="launchNavi('naver')">🗺️ 네이버지도로 시작</button>
+      <button class="btn btn-light btn-full" onclick="launchNavi('kakao')">🗺️ 카카오맵으로 시작</button>
+    </div>
+    <div class="modal-actions" style="margin-top:10px;">
+      <button class="btn btn-light btn-full" onclick="closeModal('navi-select-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 네비게이션 단계별 팝업 -->
+<div class="modal-overlay" id="navi-step-modal">
+  <div class="modal-box" style="text-align:center;">
+    <div class="modal-title" id="navi-step-title"></div>
+    <div id="navi-step-body" style="margin:12px 0;padding:12px;background:#f0f9ff;border-radius:8px;text-align:left;"></div>
+    <div style="font-size:0.78rem;color:#6b7280;margin-bottom:12px;">목적지 도착 후 다음 버튼을 누르세요.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-primary btn-full" id="navi-step-next"></button>
+      <button class="btn btn-light btn-full" onclick="closeModal('navi-step-modal')">중단</button>
+    </div>
+  </div>
+</div>
+
 <!-- 거래처 선택 팝업 -->
 <div class="modal-overlay" id="select-client-modal">
   <div class="modal-box" style="max-height:80vh;display:flex;flex-direction:column;">
@@ -1484,19 +1514,74 @@ function setNaviOrder(name, n) {
   renderNaviClientList();
 }
 
+let naviWaypoints = [];
+let naviCurrentIdx = 0;
+let naviType = '';
+
 function startNavi() {
   const ordered = Object.entries(naviOrder).sort((a,b) => a[1]-b[1]);
   if (!ordered.length) { toast('방문 순서를 지정하세요.'); return; }
-  const waypoints = ordered.map(([name]) => {
+  naviWaypoints = ordered.map(([name]) => {
     const c = state.clients.find(c => c.name === name);
-    return c ? c.address : name;
-  }).filter(Boolean);
-  if (waypoints.length === 1) {
-    window.open(`https://map.naver.com/v5/directions/-/-/-/car?goal=${encodeURIComponent(waypoints[0])}`, '_blank');
+    return { name, address: c ? c.address : name };
+  }).filter(d => d.address);
+  if (!naviWaypoints.length) { toast('주소가 등록된 거래처가 없습니다.'); return; }
+  renderNaviSelectModal();
+  document.getElementById('navi-select-modal').classList.add('open');
+}
+
+function renderNaviSelectModal() {
+  document.getElementById('navi-waypoint-list').innerHTML = naviWaypoints.map((w, i) => `
+    <div style="padding:4px 0;font-size:0.82rem;border-bottom:1px solid #f3f4f6;">
+      <span style="font-weight:700;color:#1a56db;">${i+1}.</span> ${esc(w.name)}
+      <div style="font-size:0.75rem;color:#6b7280;">📍 ${esc(w.address)}</div>
+    </div>`).join('');
+}
+
+function launchNavi(type) {
+  naviType = type;
+  closeModal('navi-select-modal');
+  naviCurrentIdx = 0;
+  if (type === 'tmap') {
+    const goal = naviWaypoints[naviWaypoints.length - 1];
+    const vias = naviWaypoints.slice(0, -1);
+    let url = `tmap://route?goalname=${encodeURIComponent(goal.name)}&goaladdr=${encodeURIComponent(goal.address)}`;
+    vias.forEach((v, i) => {
+      url += `&via${i+1}name=${encodeURIComponent(v.name)}&via${i+1}addr=${encodeURIComponent(v.address)}`;
+    });
+    window.open(url, '_blank');
   } else {
-    const goal = encodeURIComponent(waypoints[waypoints.length - 1]);
-    const vias = waypoints.slice(0, -1).map(w => encodeURIComponent(w)).join(',');
-    window.open(`https://map.naver.com/v5/directions/-/-/${vias}/car?goal=${goal}`, '_blank');
+    openNaviOne(type);
+    renderNaviStepModal();
+    document.getElementById('navi-step-modal').classList.add('open');
+  }
+}
+
+function renderNaviStepModal() {
+  const w = naviWaypoints[naviCurrentIdx];
+  const isLast = naviCurrentIdx >= naviWaypoints.length - 1;
+  document.getElementById('navi-step-title').textContent = `${naviCurrentIdx+1} / ${naviWaypoints.length} 번째`;
+  document.getElementById('navi-step-body').innerHTML = `
+    <div style="font-size:0.95rem;font-weight:700;margin-bottom:4px;">${esc(w.name)}</div>
+    <div style="font-size:0.82rem;color:#6b7280;">📍 ${esc(w.address)}</div>`;
+  const nextBtn = document.getElementById('navi-step-next');
+  if (isLast) {
+    nextBtn.textContent = '완료';
+    nextBtn.onclick = () => closeModal('navi-step-modal');
+  } else {
+    nextBtn.textContent = `다음 목적지 (${naviCurrentIdx+2}번째)`;
+    nextBtn.onclick = () => { naviCurrentIdx++; openNaviOne(naviType); renderNaviStepModal(); };
+  }
+}
+
+function openNaviOne(type) {
+  const w = naviWaypoints[naviCurrentIdx];
+  if (type === 'naver') {
+    window.open(`nmap://route/car?dname=${encodeURIComponent(w.name)}&daddr=${encodeURIComponent(w.address)}&appname=delivery`, '_blank');
+    setTimeout(() => window.open(`https://map.naver.com/v5/search/${encodeURIComponent(w.address)}`, '_blank'), 500);
+  } else if (type === 'kakao') {
+    window.open(`kakaomap://route?ep=${encodeURIComponent(w.address)}&by=CAR`, '_blank');
+    setTimeout(() => window.open(`https://map.kakao.com/link/to/${encodeURIComponent(w.name)},${encodeURIComponent(w.address)}`, '_blank'), 500);
   }
 }
 
