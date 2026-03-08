@@ -1050,6 +1050,8 @@ function saveDelivery() {
   document.getElementById('sel-client').value = '';
   const btn = document.getElementById('sel-client-btn');
   if (btn) { btn.textContent = '-- 거래처 선택 --'; btn.style.color = '#9ca3af'; }
+  // 날짜 오늘로 재설정
+  document.getElementById('sel-date').value = new Date().toISOString().slice(0,10);
   toast(`${client} 납품건 저장됨`);
   if (gdriveToken) gdriveBackup(true);
 }
