@@ -560,6 +560,9 @@
       <input type="text" id="client-add-address" placeholder="주소 (예: 부산시 해운대구 ...)" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
     </div>
     <div style="margin-bottom:6px;">
+      <input type="tel" id="client-add-tel" placeholder="📞 전화번호" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" inputmode="tel" />
+    </div>
+    <div style="margin-bottom:6px;">
       <input type="text" id="client-add-memo" placeholder="📝 메모 (배송방식, 특이사항 등)" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
     </div>
     <div style="position:relative;margin-bottom:6px;">
@@ -711,9 +714,9 @@ let state = {
   apiKey: '',
   geminiKey: '',
   clients: [
-    { name: '마트A', address: '', memo: '', pass: '', type: 'short' },
-    { name: '마트B', address: '', memo: '', pass: '', type: 'short' },
-    { name: '식당C', address: '', memo: '', pass: '', type: 'short' },
+    { name: '마트A', address: '', memo: '', pass: '', tel: '', type: 'short' },
+    { name: '마트B', address: '', memo: '', pass: '', tel: '', type: 'short' },
+    { name: '식당C', address: '', memo: '', pass: '', tel: '', type: 'short' },
   ],
   deliveries: [],     // 진행중 납품건
   history: [],        // 완료된 납품건
@@ -736,7 +739,7 @@ function loadState() {
         state.clients = state.clients.map(c => ({ name: c, address: '', memo: '' }));
       }
       // memo, pass, type 필드 없는 기존 객체 마이그레이션
-      state.clients = state.clients.map(c => ({ memo: '', pass: '', type: 'short', ...c }));
+      state.clients = state.clients.map(c => ({ memo: '', pass: '', tel: '', type: 'short', ...c }));
     }
   } catch(e) {}
 }
@@ -1048,11 +1051,12 @@ function toggleAddPass() {
 function addClient() {
   const name    = document.getElementById('client-add-input').value.trim();
   const address = document.getElementById('client-add-address').value.trim();
+  const tel     = document.getElementById('client-add-tel').value.trim();
   const memo    = document.getElementById('client-add-memo').value.trim();
   const pass    = document.getElementById('client-add-pass').value.trim();
   if (!name) { toast('거래처명을 입력하세요.'); return; }
   if (!state.clients.find(c => c.name === name)) {
-    state.clients.push({ name, address, memo, pass, type: addClientType });
+    state.clients.push({ name, address, tel, memo, pass, type: addClientType });
     saveState();
     renderClientSelects();
     renderClientList();
@@ -1060,6 +1064,7 @@ function addClient() {
     renderHistoryClientFilter();
     document.getElementById('client-add-input').value = '';
     document.getElementById('client-add-address').value = '';
+    document.getElementById('client-add-tel').value = '';
     document.getElementById('client-add-memo').value = '';
     document.getElementById('client-add-pass').value = '';
     toast('거래처 추가됨');
@@ -1321,13 +1326,15 @@ function renderClientListModal() {
           <button onclick="enableModalEdit(${i})" style="font-size:0.75rem;padding:3px 10px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;cursor:pointer;">✏️ 편집</button>
         </div>
         ${c.address ? `<div style="font-size:0.82rem;color:#374151;margin-bottom:3px;display:flex;align-items:center;gap:6px;">📍 ${esc(c.address)} <button onclick="openNaverMap('${esc(c.address)}')" style="font-size:0.72rem;padding:2px 8px;border-radius:10px;border:1px solid #0369a1;background:#e0f2fe;color:#0369a1;cursor:pointer;white-space:nowrap;">🗺️지도</button></div>` : ''}
+        ${c.tel ? `<div style="font-size:0.82rem;color:#374151;margin-bottom:3px;">📞 <a href="tel:${esc(c.tel)}" style="color:#1a56db;">${esc(c.tel)}</a></div>` : ''}
         ${c.memo ? `<div style="font-size:0.82rem;color:#374151;margin-bottom:3px;">📝 ${esc(c.memo)}</div>` : ''}
         ${c.pass ? `<div style="font-size:0.82rem;color:#92400e;">🔒 비번: <span id="modal-pass-${i}" style="filter:blur(4px);cursor:pointer;transition:filter 0.2s;" onclick="toggleModalPass(${i})">${esc(c.pass)}</span> <span style="font-size:0.72rem;color:#b45309;">(탭해서 확인)</span></div>` : ''}
-        ${!c.address && !c.memo && !c.pass ? `<div style="font-size:0.8rem;color:#9ca3af;">등록된 정보가 없습니다.</div>` : ''}
+        ${!c.address && !c.tel && !c.memo && !c.pass ? `<div style="font-size:0.8rem;color:#9ca3af;">등록된 정보가 없습니다.</div>` : ''}
       </div>
       <div id="modal-edit-${i}" style="display:none;">
         <input type="text" id="modal-name-${i}" value="${esc(c.name)}" placeholder="상호명" style="width:100%;font-size:0.88rem;font-weight:700;padding:4px 8px;border:1px solid #1a56db;border-radius:6px;margin-bottom:4px;" />
         <input type="text" id="modal-addr-${i}" value="${esc(c.address||'')}" placeholder="📍 주소" style="width:100%;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:4px;" />
+        <input type="tel" id="modal-tel-${i}" value="${esc(c.tel||'')}" placeholder="📞 전화번호" style="width:100%;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:4px;" inputmode="tel" />
         <input type="text" id="modal-memo-${i}" value="${esc(c.memo||'')}" placeholder="📝 메모" style="width:100%;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:4px;" />
         <div style="position:relative;margin-bottom:6px;">
           <input type="password" id="modal-pass-input-${i}" value="${esc(c.pass||'')}" placeholder="🔒 비번" style="width:100%;font-size:0.8rem;padding:4px 32px 4px 8px;border:1px solid #fbbf24;border-radius:6px;background:#fffbeb;" />
@@ -1357,6 +1364,7 @@ function saveModalClientField(i) {
   if (!newName) { toast('상호명을 입력하세요.'); return; }
   state.clients[i].name    = newName;
   state.clients[i].address = document.getElementById(`modal-addr-${i}`).value.trim();
+  state.clients[i].tel     = document.getElementById(`modal-tel-${i}`).value.trim();
   state.clients[i].memo    = document.getElementById(`modal-memo-${i}`).value.trim();
   state.clients[i].pass    = document.getElementById(`modal-pass-input-${i}`).value.trim();
   saveState();
