@@ -1548,8 +1548,14 @@ function renderNaviRouteDisplay() {
     return;
   }
   const appLabel = { tmap:'티맵', naver:'네이버', kakao:'다음/카카오' }[naviAppType] || '티맵';
+  const appGuide = {
+    tmap: '⚠️ 티맵: 이동 버튼 후 주소를 직접 붙여넣기 하세요.',
+    naver: '💡 네이버: 이동 버튼 → 지도 실행 후 [도착] 버튼을 누르세요.',
+    kakao: '⚠️ 다음: 이동 버튼 후 주소를 직접 붙여넣기 하세요.'
+  }[naviAppType] || '';
   el.innerHTML = `
-    <div style="font-size:0.75rem;color:#6b7280;margin-bottom:6px;">지도: <b>${appLabel}</b> · ${ordered.length}개 경로</div>
+    <div style="font-size:0.75rem;color:#6b7280;margin-bottom:4px;">지도: <b>${appLabel}</b> · ${ordered.length}개 경로</div>
+    <div style="font-size:0.72rem;color:#b45309;background:#fef9c3;border-radius:6px;padding:5px 8px;margin-bottom:8px;">${appGuide}</div>
     ${ordered.map(([name, n]) => {
       const c = state.clients.find(c => c.name === name);
       const addr = c ? c.address : '';
