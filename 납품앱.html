@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>납품 관리 앱</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+      background: #f0f2f5;
+      color: #111;
+      font-size: 14px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 헤더 */
+    #app-header {
+      background: #1a56db;
+      color: #fff;
+      padding: 7px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    #app-header h1 { font-size: 1rem; font-weight: 700; }
+    #hdr-date { font-size: 0.72rem; opacity: .85; }
+
+    /* 탭 */
+    #tab-bar {
+      display: flex;
+      background: #fff;
+      border-bottom: 2px solid #e5e7eb;
+      position: sticky;
+      top: 43px;
+      z-index: 99;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6b7280;
+      border-bottom: 3px solid transparent;
+    }
+    .tab-btn.active { color: #1a56db; border-bottom-color: #1a56db; }
+
+    /* 섹션 */
+    .section { display: none; padding: 8px; }
+    .section.active { display: block; }
+
+    /* 카드 */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .card-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    /* 폼 */
+    label { display: block; font-size: 0.75rem; font-weight: 600; color: #374151; margin-bottom: 3px; }
+    select, input[type="text"], input[type="date"], textarea {
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 0.9rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 7px;
+      background: #f9fafb;
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+    }
+    select:focus, input:focus, textarea:focus { border-color: #1a56db; background: #fff; }
+    textarea { min-height: 65px; resize: vertical; font-size: 0.82rem; }
+    .form-row { margin-bottom: 8px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .row3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+
+    /* 버튼 */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { opacity: .8; transform: scale(.97); }
+    .btn-primary { background: #1a56db; color: #fff; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-danger  { background: #dc2626; color: #fff; }
+    .btn-warning { background: #d97706; color: #fff; }
+    .btn-gray    { background: #6b7280; color: #fff; }
+    .btn-light   { background: #e5e7eb; color: #374151; }
+    .btn-full    { width: 100%; }
+    .btn-sm      { padding: 5px 9px; font-size: 0.78rem; }
+
+    /* OCR 미리보기 */
+    #ocr-preview {
+      width: 100%; border-radius: 8px; object-fit: cover;
+      display: none; margin-bottom: 6px; max-height: 150px;
+    }
+    #ocr-status { font-size: 0.75rem; color: #6b7280; min-height: 16px; margin-bottom: 6px; }
+    #ocr-status.loading { color: #1a56db; }
+    #ocr-status.error   { color: #dc2626; }
+    #ocr-status.ok      { color: #16a34a; }
+    #gemini-status { font-size: 0.75rem; min-height: 16px; margin-top: 4px; }
+    #gemini-status.loading { color: #1a56db; }
+    #gemini-status.error   { color: #dc2626; }
+    #gemini-status.ok      { color: #16a34a; }
+
+    /* 납품건 카드 */
+    .delivery-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      cursor: pointer;
+      border-left: 4px solid #1a56db;
+    }
+    .delivery-card.done { border-left-color: #16a34a; opacity: .75; }
+    .delivery-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .delivery-card-title { font-weight: 700; font-size: 0.95rem; }
+    .delivery-card-meta { font-size: 0.75rem; color: #6b7280; }
+    .delivery-card-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
+    .badge-green  { background: #dcfce7; color: #166534; }
+    .badge-red    { background: #fee2e2; color: #991b1b; }
+    .badge-gray   { background: #f3f4f6; color: #374151; }
+    .badge-done   { background: #d1fae5; color: #065f46; }
+
+    /* 검수 상세 */
+    #check-detail { display: none; }
+    #check-list-view { display: block; }
+
+    .check-item-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      position: relative;
+    }
+    .check-item-card.loaded-done {
+      opacity: .6;
+      border-left: 4px solid #16a34a;
+    }
+    .check-item-top {
+      display: flex; align-items: center; margin-bottom: 6px;
+    }
+    .check-item-name { font-weight: 900; font-size: 1.3rem; flex: 1; text-align: left; line-height: 1; }
+    .check-item-mark-center {
+      flex: 1; text-align: center;
+      font-size: 1.3rem; font-weight: 900; line-height: 1;
+    }
+    .qty-label-big {
+      flex: 1; text-align: right;
+      font-size: 1.3rem; font-weight: 900;
+      color: #dc2626; line-height: 1;
+    }
+    .check-item-name-wrap { flex: 1; }
+    /* 기호 드롭다운 */
+    .mark-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+    .mark-select {
+      flex: 1; padding: 5px 8px; border-radius: 7px;
+      border: 1.5px solid #d1d5db; background: #f9fafb;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      text-align: center; text-align-last: center;
+    }
+    .mark-display {
+      font-size: 1.2rem; font-weight: 900; min-width: 28px; text-align: center;
+    }
+    .mark-clear-btn {
+      padding: 4px 8px; border-radius: 6px; border: 1.5px solid #d1d5db;
+      background: #f3f4f6; font-size: 0.75rem; cursor: pointer; color: #6b7280;
+    }
+    .mark-text-input {
+      flex: 1; padding: 5px 7px; border-radius: 7px;
+      border: 1.5px solid #d1d5db; background: #f9fafb;
+      font-size: 0.82rem; font-weight: 600;
+    }
+    .check-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .check-item-label { font-size: 0.75rem; color: #6b7280; min-width: 40px; }
+    .ctrl-row { display: flex; align-items: center; gap: 6px; }
+    .ctrl-btn {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      font-size: 1.2rem; font-weight: 900;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity .15s, transform .1s;
+    }
+    .ctrl-btn:active { opacity: .75; transform: scale(.9); }
+    .ctrl-btn.plus  { background: #16a34a; color: #fff; }
+    .ctrl-btn.minus { background: #dc2626; color: #fff; }
+    .qty-badge {
+      min-width: 36px; padding: 3px 8px;
+      border-radius: 8px; font-weight: 700; font-size: 0.95rem;
+      background: #e0e7ff; color: #1e40af; text-align: center;
+    }
+    .qty-badge.ok { background: #dcfce7; color: #166534; }
+    .qty-badge.over { background: #fee2e2; color: #991b1b; }
+
+    /* 진행 바 */
+    .progress-wrap { margin-top: 4px; }
+    .progress-bg { background: #e5e7eb; border-radius: 8px; height: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #1a56db; border-radius: 8px; transition: width .3s; }
+    .progress-label { font-size: 0.7rem; color: #6b7280; margin-top: 2px; text-align: right; }
+
+    /* 요약 바 */
+    .summary-bar {
+      background: #1e3a8a; color: #fff;
+      padding: 10px 12px; font-size: 1rem;
+      display: flex; gap: 8px; flex-wrap: wrap;
+      justify-content: space-between; align-items: center;
+      border-radius: 8px; margin-bottom: 8px;
+    }
+    .summary-bar span { font-weight: 900; font-size: 1.2rem; }
+
+    /* 토스트 */
+    #toast {
+      position: fixed; bottom: 70px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #111; color: #fff;
+      padding: 9px 18px; border-radius: 24px;
+      font-size: 0.85rem; opacity: 0;
+      transition: opacity .3s, transform .3s;
+      z-index: 9999; pointer-events: none; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* 모달 */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200; display: none;
+      align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 18px 18px 0 0;
+      padding: 20px 16px 28px;
+      width: 100%; max-width: 540px;
+      animation: slideUp .2s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 14px; text-align: center; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .modal-actions .btn { flex: 1; }
+
+    /* 이력 */
+    .history-item {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      border-left: 4px solid #16a34a;
+    }
+    .history-item-header {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .history-item-title { font-weight: 700; font-size: 0.9rem; }
+    .history-item-meta { font-size: 0.72rem; color: #6b7280; }
+
+    /* 빈 상태 */
+    .empty-state {
+      text-align: center; padding: 36px 20px;
+      color: #9ca3af; font-size: 0.9rem;
+    }
+    .empty-state .icon { font-size: 2.2rem; margin-bottom: 8px; }
+
+    /* 설정 */
+    #api-key-wrap details summary {
+      font-size: 0.8rem; color: #6b7280; cursor: pointer;
+    }
+    #api-key-wrap details[open] summary { color: #1a56db; }
+    #api-key-inner { margin-top: 8px; }
+
+    /* 날짜 구분선 */
+    .date-divider {
+      font-size: 0.75rem; font-weight: 700; color: #6b7280;
+      padding: 4px 4px 4px 2px; margin-top: 4px;
+    }
+
+    /* 뒤로가기 버튼 */
+    .back-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: none; cursor: pointer;
+      font-size: 0.85rem; font-weight: 700; color: #1a56db;
+      padding: 4px 0; margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header id="app-header">
+  <h1>🚚 납품 관리</h1>
+  <div id="hdr-date"></div>
+</header>
+
+<!-- 탭 -->
+<nav id="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('tab-input')">📷 입력</button>
+  <button class="tab-btn" onclick="switchTab('tab-check')">✅ 검수</button>
+  <button class="tab-btn" onclick="switchTab('tab-history')">📋 이력</button>
+  <button class="tab-btn" onclick="switchTab('tab-settings')">⚙️ 설정</button>
+</nav>
+
+<!-- ===== TAB 1: 입력 ===== -->
+<div id="tab-input" class="section active">
+
+  <!-- 촬영 + AI 분석 -->
+  <div class="card">
+    <div class="card-title">📸 납품서 촬영</div>
+    <img id="ocr-preview" alt="미리보기" />
+    <div id="ocr-status">납품서를 촬영하면 AI가 품명+수량을 자동 추출합니다.</div>
+    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="handleImageCapture(event)" />
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="document.getElementById('camera-input').click()">📷 촬영</button>
+      <button class="btn btn-light" style="flex:1;" onclick="openGallery()">🖼️ 갤러리</button>
+      <button class="btn btn-warning" style="flex:1;" onclick="addMoreCapture()">➕ 추가촬영</button>
+    </div>
+    <div id="gemini-status" style="margin-top:6px;"></div>
+  </div>
+
+  <!-- 납품 정보 -->
+  <div class="card">
+    <div class="card-title">📋 납품 정보</div>
+    <div class="row2">
+      <div>
+        <label>날짜</label>
+        <input type="date" id="sel-date" />
+      </div>
+      <div>
+        <label>거래처</label>
+        <select id="sel-client" onchange="handleClientChange()">
+          <option value="">-- 거래처 --</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" id="new-client-row" style="display:none;">
+      <label>새 거래처명</label>
+      <input type="text" id="new-client-input" placeholder="거래처명 입력" />
+    </div>
+  </div>
+
+  <!-- 추출된 품목 미리보기 -->
+  <div class="card" id="parsed-preview-card" style="display:none;">
+    <div class="card-title">📦 추출된 품목 <span id="parsed-count" style="color:#1a56db;"></span></div>
+    <div id="parsed-list"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="btn btn-success" style="flex:2;" onclick="saveDelivery()">💾 납품건으로 저장</button>
+      <button class="btn btn-danger" style="flex:1;" onclick="clearPending()">🗑️ 초기화</button>
+    </div>
+  </div>
+
+  <!-- 수동 품목 추가 -->
+  <div class="card">
+    <div class="card-title">➕ 품목 직접 추가</div>
+    <div id="favorites-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+    <div class="row3">
+      <div>
+        <label>제품명</label>
+        <input type="text" id="manual-name" placeholder="파프리카 빨강" />
+      </div>
+      <div>
+        <label>수량</label>
+        <input type="text" id="manual-qty" placeholder="20" inputmode="numeric" />
+      </div>
+      <div>
+        <label>단위</label>
+        <input type="text" id="manual-unit" placeholder="박스" />
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-success" style="flex:1;" onclick="addManualItem()">➕ 품목 추가</button>
+      <button class="btn btn-warning btn-sm" onclick="saveFavorite()">⭐ 즐겨찾기</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== TAB 2: 검수 ===== -->
+<div id="tab-check" class="section">
+
+  <!-- 납품건 목록 -->
+  <div id="check-list-view">
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button class="btn btn-light btn-sm" style="flex:1;" onclick="filterDeliveries('today')">오늘</button>
+      <button class="btn btn-light btn-sm" style="flex:1;" onclick="filterDeliveries('all')">전체</button>
+      <button class="btn btn-light btn-sm" style="flex:1;" onclick="filterDeliveries('active')">진행중</button>
+      <button class="btn btn-light btn-sm" style="flex:1;" onclick="filterDeliveries('done')">완료</button>
+    </div>
+    <div id="delivery-list"></div>
+  </div>
+
+  <!-- 납품건 상세 검수 -->
+  <div id="check-detail">
+    <button class="back-btn" onclick="closeDetail()">← 목록으로</button>
+    <div class="card" id="detail-info-card">
+      <div class="delivery-card-header">
+        <div class="delivery-card-title" id="detail-client"></div>
+        <div class="delivery-card-meta" id="detail-date"></div>
+      </div>
+      <div class="delivery-card-badges" id="detail-badges"></div>
+    </div>
+    <div class="summary-bar" id="detail-summary">
+      <div>품목 <span id="ds-items">0</span>종</div>
+      <div>총 <span id="ds-total">0</span>개</div>
+      <div>상차 <span id="ds-loaded">0</span></div>
+      <div>하차 <span id="ds-unloaded">0</span></div>
+      <div>잔여 <span id="ds-remain">0</span></div>
+    </div>
+    <div style="background:#fff;border-radius:8px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+      <select id="bulk-mark-select" style="flex:1;min-width:0;padding:6px 4px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="applyBulkMark(this.value,this)">
+        <option value="">-- 기호 --</option>
+        <option value="I:black"  style="color:#111;font-weight:700;">I  검정</option>
+        <option value="I:red"    style="color:#dc2626;font-weight:700;">I  빨강</option>
+        <option value="I:blue"   style="color:#1a56db;font-weight:700;">I  파랑</option>
+        <option value="✓:black" style="color:#111;font-weight:700;">✓  검정</option>
+        <option value="✓:red"   style="color:#dc2626;font-weight:700;">✓  빨강</option>
+        <option value="✓:blue"  style="color:#1a56db;font-weight:700;">✓  파랑</option>
+        <option value="○:black" style="color:#111;font-weight:700;">○  검정</option>
+        <option value="○:red"   style="color:#dc2626;font-weight:700;">○  빨강</option>
+        <option value="○:blue"  style="color:#1a56db;font-weight:700;">○  파랑</option>
+      </select>
+      <input type="text" id="bulk-mark-text" placeholder="한글입력" style="flex:1;min-width:0;padding:6px 6px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.85rem;font-weight:600;" />
+      <select id="bulk-text-color-select" style="flex:1;min-width:0;padding:6px 4px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.95rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="selectTextColor(this.value)">
+        <option value="black" style="color:#111;font-weight:700;">검정</option>
+        <option value="red"   style="color:#dc2626;font-weight:700;">빨강</option>
+        <option value="blue"  style="color:#1a56db;font-weight:700;">파랑</option>
+      </select>
+      <button onclick="applyBulkMarkText(document.getElementById('bulk-mark-text').value)" style="flex:1;min-width:0;padding:6px 4px;border-radius:7px;border:none;background:#16a34a;color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;">적용</button>
+    </div>
+    <div id="detail-item-list"></div>
+    <div style="background:#fff;border-radius:8px;padding:8px 12px;margin-top:6px;">
+      <textarea id="delivery-memo" placeholder="메모 (배달 특이사항, 정문/후문 등)" rows="2" style="width:100%;border:1.5px solid #d1d5db;border-radius:7px;padding:6px 8px;font-size:0.85rem;resize:none;outline:none;" oninput="saveMemo(this.value)"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-success btn-full" onclick="markDone()">✅ 납품 완료</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteDelivery()">🗑️</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== TAB 3: 이력 ===== -->
+<div id="tab-history" class="section">
+  <div id="stats-card" class="card" style="margin-bottom:8px;">
+    <div class="card-title">📊 오늘 통계</div>
+    <div id="stats-body" style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.95rem;"></div>
+  </div>
+  <div class="row2" style="margin-bottom:8px;">
+    <div>
+      <label>날짜 검색</label>
+      <input type="date" id="history-date-filter" onchange="renderHistory()" />
+    </div>
+    <div>
+      <label>거래처 검색</label>
+      <select id="history-client-filter" onchange="renderHistory()">
+        <option value="">전체</option>
+      </select>
+    </div>
+  </div>
+  <div id="history-list"></div>
+</div>
+
+<!-- ===== TAB 4: 설정 ===== -->
+<div id="tab-settings" class="section">
+
+  <!-- API 키 -->
+  <div class="card" id="api-key-wrap">
+    <details id="api-key-details" open>
+      <summary>🔑 API 키 설정</summary>
+      <div id="api-key-inner">
+        <div class="form-row" style="margin-top:10px;">
+          <label>Google Gemini API 키</label>
+          <input type="text" id="gemini-key-input" placeholder="AIzaSy..." autocomplete="off" />
+          <p style="font-size:0.72rem;color:#6b7280;margin-top:3px;">사진을 직접 분석해 품명+수량을 추출합니다.</p>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveApiKey()">저장</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- 거래처 관리 -->
+  <div class="card">
+    <div class="card-title">🏪 거래처 관리</div>
+    <div class="row2" style="margin-bottom:8px;">
+      <input type="text" id="client-add-input" placeholder="새 거래처명" />
+      <button class="btn btn-success" onclick="addClient()">추가</button>
+    </div>
+    <div id="client-list"></div>
+  </div>
+
+  <!-- CSV 내보내기 -->
+  <div class="card">
+    <div class="card-title">💾 데이터 내보내기</div>
+    <button class="btn btn-primary btn-full" style="margin-bottom:6px;" onclick="exportCSV()">📊 전체 이력 CSV</button>
+    <button class="btn btn-light btn-full" onclick="exportTodayCSV()">📊 오늘 납품 CSV</button>
+  </div>
+
+  <!-- 구글 드라이브 백업 -->
+  <div class="card">
+    <div class="card-title">☁️ Google Drive 백업</div>
+    <div id="gdrive-status" style="font-size:0.8rem;color:#6b7280;margin-bottom:8px;">로그인 후 백업/복원 가능합니다.</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button id="gdrive-login-btn" class="btn btn-primary" style="flex:1;" onclick="gdriveLogin()">🔑 구글 로그인</button>
+      <button id="gdrive-logout-btn" class="btn btn-light" style="flex:1;display:none;" onclick="gdriveLogout()">로그아웃</button>
+    </div>
+    <div id="gdrive-actions" style="display:none;margin-top:8px;display:none;">
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-success" style="flex:1;" onclick="gdriveBackup()">⬆️ 백업</button>
+        <button class="btn btn-warning" style="flex:1;" onclick="gdriveRestore()">⬇️ 복원</button>
+      </div>
+      <div id="gdrive-last-backup" style="font-size:0.75rem;color:#6b7280;margin-top:6px;text-align:center;"></div>
+    </div>
+  </div>
+
+  <!-- 초기화 -->
+  <div class="card">
+    <div class="card-title">🗑️ 데이터 초기화</div>
+    <button class="btn btn-danger btn-full" onclick="confirmReset()">전체 데이터 초기화</button>
+  </div>
+
+</div>
+
+<!-- 토스트 -->
+<div id="toast"></div>
+
+<!-- 품목 수정 모달 -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-title">품목 수정</div>
+    <input type="hidden" id="edit-delivery-id" />
+    <input type="hidden" id="edit-item-idx" />
+    <div class="form-row">
+      <label>제품명</label>
+      <input type="text" id="edit-name" />
+    </div>
+    <div class="row2">
+      <div><label>수량</label><input type="text" id="edit-qty" inputmode="numeric" /></div>
+      <div><label>단위</label><input type="text" id="edit-unit" /></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveItemEdit()">저장</button>
+      <button class="btn btn-light" onclick="closeModal('edit-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 이력 상세 모달 -->
+<div class="modal-overlay" id="history-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="history-modal-title"></div>
+    <div id="history-modal-body" style="max-height:60vh;overflow-y:auto;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-warning" onclick="restoreHistoryItem()">↩️ 복구</button>
+      <button class="btn btn-danger" onclick="deleteHistoryItem()">🗑️ 삭제</button>
+      <button class="btn btn-light" onclick="closeModal('history-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════
+   STATE
+═══════════════════════════════════ */
+// deliveries: [{ id, date, client, items:[{name,qty,unit,loaded,unloaded}], done, createdAt }]
+let state = {
+  apiKey: '',
+  geminiKey: '',
+  clients: ['마트A', '마트B', '식당C'],
+  deliveries: [],     // 진행중 납품건
+  history: [],        // 완료된 납품건
+  currentDeliveryId: null,
+  filterMode: 'today',
+  pendingItems: [],   // 입력탭 추출 대기 품목
+  historySelectedId: null,
+  favorites: [],      // 즐겨찾기 품목 [{name, unit}]
+};
+
+const STORAGE_KEY = 'delivery_app_v3';
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) state = { ...state, ...JSON.parse(s) };
+  } catch(e) {}
+}
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/* ═══════════════════════════════════
+   INIT
+═══════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('sel-date').value = today;
+  document.getElementById('hdr-date').textContent = today;
+
+  if (state.geminiKey) document.getElementById('gemini-key-input').value = state.geminiKey;
+  if (state.apiKey && state.geminiKey) {
+    document.getElementById('api-key-details').removeAttribute('open');
+  }
+
+  renderClientSelects();
+  renderClientList();
+  renderDeliveryList();
+  renderHistory();
+  renderParsedPreview();
+  renderFavorites();
+  renderStats();
+});
+
+/* ═══════════════════════════════════
+   TAB
+═══════════════════════════════════ */
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'tab-check') { closeDetail(); renderDeliveryList(); }
+  if (id === 'tab-history') { renderHistory(); renderStats(); }
+  if (id === 'tab-settings') { renderClientList(); renderHistoryClientFilter(); }
+}
+
+/* ═══════════════════════════════════
+   API 키
+═══════════════════════════════════ */
+function saveApiKey() {
+  state.geminiKey = document.getElementById('gemini-key-input').value.trim();
+  saveState();
+  toast('API 키 저장됨');
+  document.getElementById('api-key-details').removeAttribute('open');
+}
+
+/* ═══════════════════════════════════
+   OCR
+═══════════════════════════════════ */
+function setOcrStatus(msg, cls='') {
+  const el = document.getElementById('ocr-status');
+  el.textContent = msg; el.className = cls;
+}
+function setGeminiStatus(msg, cls='') {
+  const el = document.getElementById('gemini-status');
+  el.textContent = msg; el.className = cls;
+}
+
+function openGallery() {
+  const inp = document.getElementById('camera-input');
+  inp.removeAttribute('capture');
+  inp.click();
+  setTimeout(() => inp.setAttribute('capture','environment'), 500);
+}
+
+async function handleImageCapture(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const prev = document.getElementById('ocr-preview');
+  prev.src = URL.createObjectURL(file);
+  prev.style.display = 'block';
+
+  if (!state.geminiKey) { setGeminiStatus('⚠️ 설정에서 Gemini API 키를 먼저 저장하세요.','error'); return; }
+
+  setGeminiStatus('🤖 AI가 납품서를 분석 중…','loading');
+
+  try {
+    const b64 = await toBase64(file);
+    const mimeType = file.type || 'image/jpeg';
+    await analyzeImageWithGemini(b64, mimeType);
+    e.target.value = '';
+  } catch(err) {
+    setGeminiStatus('❌ ' + err.message, 'error');
+  }
+}
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ═══════════════════════════════════
+   GEMINI VISION
+═══════════════════════════════════ */
+async function analyzeImageWithGemini(b64, mimeType) {
+  const prompt = `이 이미지는 납품서(거래명세서)입니다.
+납품서 표에서 "품명"과 "수량"만 추출하세요.
+
+[규칙]
+1. 품명: 상품명만 (식품, 빵, 음료, 공산품 등)
+2. 수량: 해당 품목의 납품 수량 (정수)
+3. 단위: 박스, BOX, EA, 개, 봉, 팩, 케이스, 판, 포, 말, kg 등
+4. 규격(크기/용량 표시)은 수량이 아닙니다.
+5. 단가, 금액, 합계, 부가세, 상호명, 날짜, 주소는 제외하세요.
+6. 수량 모르면 1로 하세요.
+7. JSON 배열만 출력하고 다른 텍스트는 절대 쓰지 마세요.
+
+[출력 형식]
+[{"name":"품명","qty":숫자,"unit":"단위"}]`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${state.geminiKey}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents:[{ parts:[
+        { text: prompt },
+        { inline_data: { mime_type: mimeType, data: b64 } }
+      ]}]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) throw new Error('AI 응답에서 품목을 찾지 못했습니다.');
+  const parsed = JSON.parse(jsonMatch[0]);
+  if (!parsed.length) throw new Error('추출된 품목이 없습니다.');
+
+  const newItems = parsed.map(item => ({
+    name: String(item.name || '').trim(),
+    qty:  parseInt(item.qty, 10) || 1,
+    unit: String(item.unit || '').trim(),
+    loaded: 0, unloaded: 0
+  })).filter(i => i.name);
+
+  const inp = document.getElementById('camera-input');
+  if (inp.dataset.append === '1') {
+    state.pendingItems = [...(state.pendingItems || []), ...newItems];
+    inp.removeAttribute('data-append');
+  } else {
+    state.pendingItems = newItems;
+  }
+
+  saveState();
+  renderParsedPreview();
+  setGeminiStatus(`✅ ${state.pendingItems.length}개 품목 추출됨`, 'ok');
+}
+
+function parseOcrText() {
+  toast('텍스트 직접 파싱은 현재 사용 불가합니다. 사진을 촬영하세요.');
+}
+
+function parseOcrText() {
+  const raw = document.getElementById('ocr-text').value.trim();
+  if (!raw) { toast('OCR 텍스트가 없습니다.'); return; }
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const items = [];
+  for (const line of lines) {
+    const m = line.match(/^(.+?)\s+(\d+)\s*([가-힣a-zA-Z]*)/);
+    if (m) items.push({ name: m[1].trim(), qty: parseInt(m[2]), unit: m[3] || '', loaded:0, unloaded:0 });
+  }
+  if (!items.length) { toast('품목을 파싱하지 못했습니다.'); return; }
+  state.pendingItems = items;
+  saveState();
+  renderParsedPreview();
+  toast(`${items.length}개 품목 파싱됨`);
+}
+
+/* ═══════════════════════════════════
+   추출 품목 미리보기
+═══════════════════════════════════ */
+function renderParsedPreview() {
+  const card = document.getElementById('parsed-preview-card');
+  const list = document.getElementById('parsed-list');
+  const cnt  = document.getElementById('parsed-count');
+  if (!state.pendingItems || !state.pendingItems.length) {
+    card.style.display = 'none'; return;
+  }
+  card.style.display = 'block';
+  cnt.textContent = `(${state.pendingItems.length}개)`;
+  list.innerHTML = state.pendingItems.map((it, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;">
+      <span style="font-weight:600;font-size:0.88rem;">${esc(it.name)}</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:0.85rem;color:#1a56db;font-weight:700;">${it.qty} ${esc(it.unit)}</span>
+        <button class="btn btn-danger btn-sm" onclick="removePendingItem(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function clearPending() {
+  state.pendingItems = [];
+  document.getElementById('ocr-preview').style.display = 'none';
+  setGeminiStatus('');
+  saveState();
+  renderParsedPreview();
+  toast('추출 품목 초기화됨');
+}
+
+function removePendingItem(i) {
+  state.pendingItems.splice(i, 1);
+  saveState();
+  renderParsedPreview();
+}
+
+/* ═══════════════════════════════════
+   수동 품목 추가
+═══════════════════════════════════ */
+function addManualItem() {
+  const name = document.getElementById('manual-name').value.trim();
+  const qty  = parseInt(document.getElementById('manual-qty').value) || 1;
+  const unit = document.getElementById('manual-unit').value.trim();
+  if (!name) { toast('제품명을 입력하세요.'); return; }
+  if (!state.pendingItems) state.pendingItems = [];
+  state.pendingItems.push({ name, qty, unit, loaded:0, unloaded:0 });
+  document.getElementById('manual-name').value = '';
+  document.getElementById('manual-qty').value  = '';
+  document.getElementById('manual-unit').value = '';
+  saveState();
+  renderParsedPreview();
+  toast('품목 추가됨');
+}
+
+/* ═══════════════════════════════════
+   납품건 저장
+═══════════════════════════════════ */
+function saveDelivery() {
+  const date   = document.getElementById('sel-date').value;
+  let client   = document.getElementById('sel-client').value;
+  const newCli = document.getElementById('new-client-input').value.trim();
+  if (client === '__new__') {
+    if (!newCli) { toast('거래처명을 입력하세요.'); return; }
+    client = newCli;
+    if (!state.clients.includes(client)) state.clients.push(client);
+    document.getElementById('new-client-input').value = '';
+    renderClientSelects();
+    renderHistoryClientFilter();
+  }
+  if (!client) { toast('거래처를 선택하세요.'); return; }
+  if (!state.pendingItems || !state.pendingItems.length) { toast('품목이 없습니다.'); return; }
+
+  const delivery = {
+    id: Date.now().toString(),
+    date, client,
+    items: [...state.pendingItems],
+    done: false,
+    createdAt: new Date().toISOString(),
+  };
+  state.deliveries.push(delivery);
+  state.pendingItems = [];
+  const ocrPreview = document.getElementById('ocr-preview');
+  if (ocrPreview) ocrPreview.style.display = 'none';
+  setOcrStatus('납품서를 촬영하세요.');
+  setGeminiStatus('');
+  saveState();
+  renderParsedPreview();
+  renderClientSelects();
+  toast(`${client} 납품건 저장됨`);
+}
+
+/* ═══════════════════════════════════
+   거래처
+═══════════════════════════════════ */
+function renderClientSelects() {
+  const opts = state.clients.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  document.getElementById('sel-client').innerHTML =
+    `<option value="">-- 거래처 --</option>${opts}<option value="__new__">+ 새 거래처</option>`;
+}
+
+function handleClientChange() {
+  const v = document.getElementById('sel-client').value;
+  document.getElementById('new-client-row').style.display = v === '__new__' ? '' : 'none';
+}
+
+function addClient() {
+  const name = document.getElementById('client-add-input').value.trim();
+  if (!name) return;
+  if (!state.clients.includes(name)) {
+    state.clients.push(name);
+    saveState();
+    renderClientSelects();
+    renderClientList();
+    renderHistoryClientFilter();
+    document.getElementById('client-add-input').value = '';
+    toast('거래처 추가됨');
+  }
+}
+
+function renderClientList() {
+  document.getElementById('client-list').innerHTML = state.clients.map((c, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;">
+      <span style="font-size:0.88rem;">${esc(c)}</span>
+      <button class="btn btn-danger btn-sm" onclick="removeClient(${i})">삭제</button>
+    </div>
+  `).join('');
+}
+
+function removeClient(i) {
+  state.clients.splice(i, 1);
+  saveState();
+  renderClientSelects();
+  renderClientList();
+}
+
+/* ═══════════════════════════════════
+   납품건 목록 (검수 탭)
+═══════════════════════════════════ */
+function filterDeliveries(mode) {
+  state.filterMode = mode;
+  renderDeliveryList();
+}
+
+function renderDeliveryList() {
+  const today = new Date().toISOString().slice(0,10);
+  const mode  = state.filterMode || 'today';
+  let list    = [...state.deliveries];
+
+  if (mode === 'today')  list = list.filter(d => d.date === today);
+  if (mode === 'active') list = list.filter(d => !d.done);
+  if (mode === 'done')   list = list.filter(d => d.done);
+
+  list.sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+
+  const el = document.getElementById('delivery-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📦</div><div>납품건이 없습니다.</div></div>`;
+    return;
+  }
+
+  // 날짜별 그룹
+  const groups = {};
+  list.forEach(d => { if (!groups[d.date]) groups[d.date] = []; groups[d.date].push(d); });
+
+  el.innerHTML = Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(date => {
+    const cards = groups[date].map(d => {
+      const total    = d.items.length;
+      const loaded   = d.items.filter(i => i.loaded >= i.qty).length;
+      const unloaded = d.items.filter(i => i.unloaded >= i.qty).length;
+      return `
+        <div class="delivery-card${d.done?' done':''}" onclick="openDetail('${d.id}')">
+          <div class="delivery-card-header">
+            <div class="delivery-card-title">${esc(d.client)}</div>
+            <div class="delivery-card-meta">${total}종 ${d.done?'✅완료':''}</div>
+          </div>
+          <div class="delivery-card-badges">
+            <span class="badge badge-gray">${total}종</span>
+            <span class="badge badge-blue">상차 ${loaded}/${total}</span>
+            <span class="badge badge-green">하차 ${unloaded}/${total}</span>
+            ${d.done?'<span class="badge badge-done">완료</span>':''}
+          </div>
+        </div>`;
+    }).join('');
+    return `<div class="date-divider">📅 ${date}</div>${cards}`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════
+   납품건 상세 (검수)
+═══════════════════════════════════ */
+function openDetail(id) {
+  state.currentDeliveryId = id;
+  document.getElementById('check-list-view').style.display = 'none';
+  document.getElementById('check-detail').style.display = 'block';
+  renderDetail();
+}
+
+function closeDetail() {
+  state.currentDeliveryId = null;
+  document.getElementById('check-detail').style.display = 'none';
+  document.getElementById('check-list-view').style.display = 'block';
+  renderDeliveryList();
+}
+
+function getDelivery(id) {
+  return state.deliveries.find(d => d.id === id);
+}
+
+function renderDetail() {
+  const id = state.currentDeliveryId;
+  const d  = getDelivery(id);
+  if (!d) { closeDetail(); return; }
+
+  document.getElementById('detail-client').textContent = d.client;
+  document.getElementById('detail-date').textContent   = d.date;
+
+  const totalQty    = d.items.reduce((s,i) => s + i.qty, 0);
+  const totalLoaded = d.items.reduce((s,i) => s + i.loaded, 0);
+  const totalUnloaded = d.items.reduce((s,i) => s + i.unloaded, 0);
+
+  document.getElementById('ds-items').textContent    = d.items.length;
+  document.getElementById('ds-total').textContent    = totalQty;
+  document.getElementById('ds-loaded').textContent   = totalLoaded;
+  document.getElementById('ds-unloaded').textContent = totalUnloaded;
+  document.getElementById('ds-remain').textContent   = totalQty - totalLoaded;
+
+  // bulk 기호 선택기 현재 상태 복원
+  const bulkSel = document.getElementById('bulk-mark-select');
+  const bulkTxt = document.getElementById('bulk-mark-text');
+  if (bulkSel && d.items.length > 0) {
+    const firstMark = d.items[0].mark || '';
+    const allSame = d.items.every(it => it.mark === firstMark);
+    bulkSel.value = allSame ? firstMark : '';
+    if (bulkSel.value) {
+      const mc = firstMark.split(':')[1];
+      bulkSel.style.color = mc==='red'?'#dc2626': mc==='blue'?'#1a56db':'#111';
+    } else { bulkSel.style.color = '#555'; }
+  }
+  if (bulkTxt && d.items.length > 0) {
+    const firstTxt = d.items[0].markText || '';
+    const allSameTxt = d.items.every(it => (it.markText||'') === firstTxt);
+    bulkTxt.value = allSameTxt ? firstTxt : '';
+    const firstTxtColor = d.items[0].markTextColor || 'black';
+    _textColor = firstTxtColor;
+    selectTextColor(firstTxtColor);
+  }
+
+  // 메모 복원
+  const memoEl = document.getElementById('delivery-memo');
+  if (memoEl) memoEl.value = d.memo || '';
+
+  // ㄱㄴㄷ 정렬 + 상차완료 항목은 뒤로
+  const sorted = d.items
+    .map((item, i) => ({ item, i }))
+    .sort((a, b) => {
+      const aDone = a.item.loaded >= a.item.qty;
+      const bDone = b.item.loaded >= b.item.qty;
+      if (aDone !== bDone) return aDone ? 1 : -1;
+      return a.item.name.localeCompare(b.item.name, 'ko');
+    });
+
+  const MARK_OPTIONS = [
+    { key:'',          label:'-- 기호 선택 --',    color:'' },
+    { key:'I:black',   label:'I  검정',            color:'#111' },
+    { key:'I:red',     label:'I  빨강',            color:'#dc2626' },
+    { key:'I:blue',    label:'I  파랑',            color:'#1a56db' },
+    { key:'✓:black',  label:'✓  검정',     color:'#111' },
+    { key:'✓:red',    label:'✓  빨강',     color:'#dc2626' },
+    { key:'✓:blue',   label:'✓  파랑',     color:'#1a56db' },
+    { key:'○:black',  label:'○  검정', color:'#111' },
+    { key:'○:red',    label:'○  빨강', color:'#dc2626' },
+    { key:'○:blue',   label:'○  파랑', color:'#1a56db' },
+  ];
+
+  document.getElementById('detail-item-list').innerHTML = sorted.map(({ item, i }) => {
+    const loadDone    = item.loaded >= item.qty;
+    const unloadDone  = item.unloaded >= item.qty;
+    const loadClass   = loadDone ? 'ok' : '';
+    const unloadClass = unloadDone ? 'ok' : '';
+    const pct = Math.min(100, Math.round((item.loaded / item.qty) * 100));
+    const curMark = item.mark || '';
+    const opts = MARK_OPTIONS.map(o =>
+      `<option value="${o.key}"${curMark===o.key?' selected':''}>${o.label}</option>`
+    ).join('');
+    let markColor = '#111';
+    let markSymbol = '';
+    if (curMark) {
+      const [ms, mc] = curMark.split(':');
+      markColor = mc==='red'?'#dc2626': mc==='blue'?'#1a56db':'#111';
+      markSymbol = ms;
+    }
+    const markTextVal = item.markText || '';
+    const txtC = item.markTextColor || 'black';
+    const txtColor = txtC==='red'?'#dc2626': txtC==='blue'?'#1a56db':'#111';
+    const markDisplay = markSymbol
+      ? (markTextVal ? `${markSymbol} <span style="color:${txtColor};">${esc(markTextVal)}</span>` : markSymbol)
+      : (markTextVal ? `<span style="color:${txtColor};">${esc(markTextVal)}</span>` : '');
+    return `
+      <div class="check-item-card${loadDone?' loaded-done':''}">
+        <div class="check-item-top">
+          <div class="check-item-name" onclick="openItemEdit('${id}',${i})">${esc(item.name)}</div>
+          <div class="check-item-mark-center" style="color:${markColor};">${markDisplay}</div>
+          <div class="qty-label-big">${item.qty}<span style="font-size:0.65rem;">${esc(item.unit)}</span></div>
+        </div>
+        <div class="check-item-row" style="margin-top:6px;">
+          <span class="check-item-label">상차</span>
+          <div class="ctrl-row">
+            <button class="ctrl-btn minus" onclick="adjustItem('${id}',${i},'loaded',-1)">−</button>
+            <span class="qty-badge ${loadClass}">${item.loaded}</span>
+            <button class="ctrl-btn plus"  onclick="adjustItem('${id}',${i},'loaded',+1)">+</button>
+          </div>
+        </div>
+        <div class="check-item-row">
+          <span class="check-item-label">하차</span>
+          <div class="ctrl-row">
+            <button class="ctrl-btn minus" onclick="adjustItem('${id}',${i},'unloaded',-1)">−</button>
+            <span class="qty-badge ${unloadClass}">${item.unloaded}</span>
+            <button class="ctrl-btn plus"  onclick="adjustItem('${id}',${i},'unloaded',+1)">+</button>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bg"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <div class="progress-label">${pct}%</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function applyBulkMark(val, sel) {
+  const id = state.currentDeliveryId;
+  const d = getDelivery(id);
+  if (!d) return;
+  d.items.forEach(it => { it.mark = val; });
+  saveState();
+  if (val) {
+    const mc = val.split(':')[1];
+    sel.style.color = mc==='red'?'#dc2626': mc==='blue'?'#1a56db':'#111';
+  } else { sel.style.color = '#555'; }
+  renderDetail();
+}
+
+let _textColor = 'black';
+
+function selectTextColor(color) {
+  _textColor = color;
+  const sel = document.getElementById('bulk-text-color-select');
+  if (sel) {
+    sel.value = color;
+    sel.style.color = color==='red'?'#dc2626': color==='blue'?'#1a56db':'#111';
+  }
+}
+
+function applyBulkMarkText(text) {
+  const id = state.currentDeliveryId;
+  const d = getDelivery(id);
+  if (!d) return;
+  d.items.forEach(it => { it.markText = text; it.markTextColor = _textColor; });
+  saveState();
+  renderDetail();
+}
+
+function updateMarkSelectColor(sel) {
+  const val = sel.value;
+  if (!val) { sel.style.color = '#555'; return; }
+  const mc = val.split(':')[1];
+  sel.style.color = mc==='red'?'#dc2626': mc==='blue'?'#1a56db':'#111';
+}
+
+function setMark(id, idx, sym) {
+  const d = getDelivery(id);
+  if (!d) return;
+  d.items[idx].mark = sym;
+  saveState();
+  renderDetail();
+}
+
+function setMarkText(id, idx, text) {
+  const d = getDelivery(id);
+  if (!d) return;
+  d.items[idx].markText = text;
+  saveState();
+  // 텍스트 입력 중엔 renderDetail 안 함 (커서 이탈 방지)
+}
+
+function clearMark(id, idx) {
+  const d = getDelivery(id);
+  if (!d) return;
+  d.items[idx].mark = '';
+  d.items[idx].markText = '';
+  saveState();
+  renderDetail();
+}
+
+function adjustItem(id, idx, field, delta) {
+  const d = getDelivery(id);
+  if (!d) return;
+  d.items[idx][field] = Math.max(0, (d.items[idx][field] || 0) + delta);
+  saveState();
+  renderDetail();
+}
+
+function markDone() {
+  const d = getDelivery(state.currentDeliveryId);
+  if (!d) return;
+  d.done = true;
+  // 이력으로 이동
+  state.history.push({ ...d, completedAt: new Date().toISOString() });
+  state.deliveries = state.deliveries.filter(x => x.id !== d.id);
+  saveState();
+  toast(`${d.client} 납품 완료 처리됨`);
+  closeDetail();
+}
+
+function deleteDelivery() {
+  if (!confirm('이 납품건을 삭제할까요?')) return;
+  state.deliveries = state.deliveries.filter(d => d.id !== state.currentDeliveryId);
+  saveState();
+  toast('삭제됨');
+  closeDetail();
+}
+
+/* ═══════════════════════════════════
+   품목 수정 모달
+═══════════════════════════════════ */
+function openItemEdit(deliveryId, idx) {
+  const d = getDelivery(deliveryId);
+  if (!d) return;
+  const item = d.items[idx];
+  document.getElementById('edit-delivery-id').value = deliveryId;
+  document.getElementById('edit-item-idx').value    = idx;
+  document.getElementById('edit-name').value        = item.name;
+  document.getElementById('edit-qty').value         = item.qty;
+  document.getElementById('edit-unit').value        = item.unit;
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function saveItemEdit() {
+  const id   = document.getElementById('edit-delivery-id').value;
+  const idx  = parseInt(document.getElementById('edit-item-idx').value);
+  const d    = getDelivery(id);
+  if (!d) return;
+  d.items[idx].name = document.getElementById('edit-name').value.trim();
+  d.items[idx].qty  = parseInt(document.getElementById('edit-qty').value) || 1;
+  d.items[idx].unit = document.getElementById('edit-unit').value.trim();
+  saveState();
+  closeModal('edit-modal');
+  renderDetail();
+  toast('저장됨');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+/* ═══════════════════════════════════
+   이력
+═══════════════════════════════════ */
+function renderHistoryClientFilter() {
+  const sel  = document.getElementById('history-client-filter');
+  const cur  = sel.value;
+  sel.innerHTML = `<option value="">전체</option>` +
+    state.clients.map(c => `<option value="${esc(c)}"${c===cur?' selected':''}>${esc(c)}</option>`).join('');
+}
+
+function renderHistory() {
+  const dateFilter   = document.getElementById('history-date-filter').value;
+  const clientFilter = document.getElementById('history-client-filter').value;
+
+  let list = [...state.history];
+  if (dateFilter)   list = list.filter(h => h.date === dateFilter);
+  if (clientFilter) list = list.filter(h => h.client === clientFilter);
+  list.sort((a,b) => b.completedAt.localeCompare(a.completedAt));
+
+  const el = document.getElementById('history-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><div>이력이 없습니다.</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(h => `
+    <div class="history-item" onclick="openHistoryDetail('${h.id}')">
+      <div class="history-item-header">
+        <div class="history-item-title">${esc(h.client)}</div>
+        <div class="history-item-meta">${h.date}</div>
+      </div>
+      <div style="margin-top:4px;">
+        ${h.items.map(i=>`<span class="badge badge-gray" style="margin-right:4px;margin-top:3px;">${esc(i.name)} ${i.qty}${esc(i.unit)}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function openHistoryDetail(id) {
+  state.historySelectedId = id;
+  // 진행중 + 완료 모두에서 찾기
+  const h = state.history.find(x => x.id === id);
+  if (!h) return;
+  document.getElementById('history-modal-title').textContent = `${h.client} — ${h.date}`;
+  document.getElementById('history-modal-body').innerHTML = `
+    ${h.memo ? `<div style="background:#fef9c3;padding:6px 10px;border-radius:6px;margin-bottom:8px;font-size:0.85rem;">📝 ${esc(h.memo)}</div>` : ''}
+    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+      <thead><tr style="background:#f3f4f6;">
+        <th style="padding:6px;text-align:left;">품명</th>
+        <th style="padding:6px;text-align:center;">수량</th>
+        <th style="padding:6px;text-align:center;">상차</th>
+        <th style="padding:6px;text-align:center;">하차</th>
+      </tr></thead>
+      <tbody>
+        ${h.items.map(i=>`<tr>
+          <td style="padding:6px;">${esc(i.name)}</td>
+          <td style="padding:6px;text-align:center;">${i.qty}${esc(i.unit)}</td>
+          <td style="padding:6px;text-align:center;">${i.loaded}</td>
+          <td style="padding:6px;text-align:center;">${i.unloaded}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+  document.getElementById('history-modal').classList.add('open');
+}
+
+function restoreHistoryItem() {
+  if (!confirm('이 납품건을 진행중으로 복구할까요?')) return;
+  const h = state.history.find(x => x.id === state.historySelectedId);
+  if (!h) return;
+  const restored = { ...h, done: false, completedAt: null };
+  delete restored.completedAt;
+  state.deliveries.push(restored);
+  state.history = state.history.filter(x => x.id !== state.historySelectedId);
+  saveState();
+  closeModal('history-modal');
+  renderHistory();
+  toast(`${h.client} 납품건 복구됨`);
+}
+
+function deleteHistoryItem() {
+  if (!confirm('이 이력을 삭제할까요?')) return;
+  state.history = state.history.filter(h => h.id !== state.historySelectedId);
+  saveState();
+  closeModal('history-modal');
+  renderHistory();
+  toast('이력 삭제됨');
+}
+
+/* ═══════════════════════════════════
+   CSV 내보내기
+═══════════════════════════════════ */
+function exportCSV() {
+  const rows = [['날짜','거래처','품명','수량','단위','상차','하차','완료']];
+  state.history.forEach(h => {
+    h.items.forEach(i => rows.push([h.date, h.client, i.name, i.qty, i.unit, i.loaded, i.unloaded, '완료']));
+  });
+  state.deliveries.forEach(h => {
+    h.items.forEach(i => rows.push([h.date, h.client, i.name, i.qty, i.unit, i.loaded, i.unloaded, '진행중']));
+  });
+  downloadCSV(rows, `납품이력_전체.csv`);
+}
+
+function exportTodayCSV() {
+  const today = new Date().toISOString().slice(0,10);
+  const rows  = [['날짜','거래처','품명','수량','단위','상차','하차']];
+  [...state.deliveries, ...state.history].filter(h => h.date === today).forEach(h => {
+    h.items.forEach(i => rows.push([h.date, h.client, i.name, i.qty, i.unit, i.loaded, i.unloaded]));
+  });
+  downloadCSV(rows, `납품_${today}.csv`);
+}
+
+function downloadCSV(rows, filename) {
+  const bom = '\uFEFF';
+  const csv = bom + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a   = document.createElement('a');
+  a.href    = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' }));
+  a.download = filename;
+  a.click();
+}
+
+/* ═══════════════════════════════════
+   초기화
+═══════════════════════════════════ */
+function confirmReset() {
+  if (!confirm('모든 데이터를 초기화할까요? 되돌릴 수 없습니다.')) return;
+  state.deliveries   = [];
+  state.history      = [];
+  state.pendingItems = [];
+  saveState();
+  renderDeliveryList();
+  renderHistory();
+  renderParsedPreview();
+  toast('초기화됨');
+}
+
+/* ═══════════════════════════════════
+   메모
+═══════════════════════════════════ */
+function saveMemo(text) {
+  const d = getDelivery(state.currentDeliveryId);
+  if (!d) return;
+  d.memo = text;
+  saveState();
+}
+
+/* ═══════════════════════════════════
+   즐겨찾기
+═══════════════════════════════════ */
+function renderFavorites() {
+  const el = document.getElementById('favorites-list');
+  if (!el) return;
+  if (!state.favorites || !state.favorites.length) { el.innerHTML = ''; return; }
+  el.innerHTML = state.favorites.map((f, i) =>
+    `<button onclick="addFavoriteItem(${i})" style="padding:4px 10px;border-radius:20px;border:1.5px solid #1a56db;background:#eff6ff;color:#1a56db;font-size:0.8rem;font-weight:700;cursor:pointer;">${esc(f.name)}</button>`
+  ).join('');
+}
+
+function addFavoriteItem(i) {
+  const f = state.favorites[i];
+  if (!f) return;
+  if (!state.pendingItems) state.pendingItems = [];
+  state.pendingItems.push({ name: f.name, qty: 1, unit: f.unit || '', loaded: 0, unloaded: 0 });
+  saveState();
+  renderParsedPreview();
+  toast(`${f.name} 추가됨`);
+}
+
+function saveFavorite() {
+  const name = document.getElementById('manual-name').value.trim();
+  const unit = document.getElementById('manual-unit').value.trim();
+  if (!name) { toast('제품명을 입력하세요.'); return; }
+  if (!state.favorites) state.favorites = [];
+  if (state.favorites.some(f => f.name === name)) { toast('이미 즐겨찾기에 있습니다.'); return; }
+  state.favorites.push({ name, unit });
+  saveState();
+  renderFavorites();
+  toast(`${name} 즐겨찾기 저장됨`);
+}
+
+/* ═══════════════════════════════════
+   추가 촬영
+═══════════════════════════════════ */
+function addMoreCapture() {
+  if (!state.pendingItems || !state.pendingItems.length) {
+    toast('먼저 납품서를 촬영하세요.');
+    return;
+  }
+  const inp = document.getElementById('camera-input');
+  inp.dataset.append = '1';
+  inp.removeAttribute('capture');
+  inp.click();
+  setTimeout(() => inp.setAttribute('capture', 'environment'), 500);
+}
+
+/* ═══════════════════════════════════
+   통계
+═══════════════════════════════════ */
+function renderStats() {
+  const today = new Date().toISOString().slice(0,10);
+  const todayAll = [...state.deliveries, ...state.history].filter(d => d.date === today);
+  const clients = [...new Set(todayAll.map(d => d.client))].length;
+  const totalItems = todayAll.reduce((s,d) => s + d.items.reduce((a,i) => a + i.qty, 0), 0);
+  const totalLoaded = todayAll.reduce((s,d) => s + d.items.reduce((a,i) => a + i.loaded, 0), 0);
+  const totalUnloaded = todayAll.reduce((s,d) => s + d.items.reduce((a,i) => a + i.unloaded, 0), 0);
+  const el = document.getElementById('stats-body');
+  if (!el) return;
+  el.innerHTML = `
+    <div><span style="color:#9ca3af;">거래처</span> <strong>${clients}곳</strong></div>
+    <div><span style="color:#9ca3af;">납품건</span> <strong>${todayAll.length}건</strong></div>
+    <div><span style="color:#9ca3af;">총수량</span> <strong>${totalItems}개</strong></div>
+    <div><span style="color:#9ca3af;">상차</span> <strong style="color:#1a56db;">${totalLoaded}</strong></div>
+    <div><span style="color:#9ca3af;">하차</span> <strong style="color:#16a34a;">${totalUnloaded}</strong></div>
+  `;
+}
+
+/* ═══════════════════════════════════
+   유틸
+═══════════════════════════════════ */
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* ═══════════════════════════════════
+   GOOGLE DRIVE 백업
+═══════════════════════════════════ */
+const GDRIVE_CLIENT_ID = '497300039730-4tf6luso79co482dfne7jagde250a9av.apps.googleusercontent.com';
+const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const GDRIVE_FILE_NAME = 'delivery_backup.json';
+let gdriveToken = null;
+
+function gdriveSetStatus(msg, color='#6b7280') {
+  const el = document.getElementById('gdrive-status');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+function gdriveLogin() {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPE,
+    callback: (resp) => {
+      if (resp.error) { gdriveSetStatus('로그인 실패: ' + resp.error, '#dc2626'); return; }
+      gdriveToken = resp.access_token;
+      document.getElementById('gdrive-login-btn').style.display = 'none';
+      document.getElementById('gdrive-logout-btn').style.display = '';
+      document.getElementById('gdrive-actions').style.display = '';
+      gdriveSetStatus('✅ 로그인됨 — 백업/복원 가능', '#16a34a');
+    },
+  });
+  client.requestAccessToken();
+}
+
+function gdriveLogout() {
+  if (gdriveToken) google.accounts.oauth2.revoke(gdriveToken);
+  gdriveToken = null;
+  document.getElementById('gdrive-login-btn').style.display = '';
+  document.getElementById('gdrive-logout-btn').style.display = 'none';
+  document.getElementById('gdrive-actions').style.display = 'none';
+  gdriveSetStatus('로그인 후 백업/복원 가능합니다.');
+}
+
+async function gdriveBackup() {
+  if (!gdriveToken) { toast('먼저 구글 로그인하세요.'); return; }
+  gdriveSetStatus('백업 중…', '#1a56db');
+  try {
+    // 기존 파일 찾기
+    const searchRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${GDRIVE_FILE_NAME}'&fields=files(id)`,
+      { headers: { Authorization: `Bearer ${gdriveToken}` } }
+    );
+    const searchData = await searchRes.json();
+    const existingId = searchData.files?.[0]?.id;
+
+    const body = JSON.stringify(state);
+    const meta = { name: GDRIVE_FILE_NAME, parents: ['appDataFolder'] };
+
+    let url, method;
+    if (existingId) {
+      url = `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart`;
+      method = 'PATCH';
+    } else {
+      url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+      method = 'POST';
+    }
+
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(existingId ? {} : meta)], { type: 'application/json' }));
+    form.append('file', new Blob([body], { type: 'application/json' }));
+
+    const res = await fetch(url, { method, headers: { Authorization: `Bearer ${gdriveToken}` }, body: form });
+    if (!res.ok) throw new Error('백업 실패');
+
+    const now = new Date().toLocaleString('ko-KR');
+    document.getElementById('gdrive-last-backup').textContent = `마지막 백업: ${now}`;
+    gdriveSetStatus('✅ 백업 완료', '#16a34a');
+    toast('구글 드라이브 백업 완료');
+  } catch(e) {
+    gdriveSetStatus('❌ 백업 실패: ' + e.message, '#dc2626');
+  }
+}
+
+async function gdriveRestore() {
+  if (!gdriveToken) { toast('먼저 구글 로그인하세요.'); return; }
+  if (!confirm('구글 드라이브에서 데이터를 복원할까요?\n현재 데이터는 덮어써집니다.')) return;
+  gdriveSetStatus('복원 중…', '#1a56db');
+  try {
+    const searchRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${GDRIVE_FILE_NAME}'&fields=files(id)`,
+      { headers: { Authorization: `Bearer ${gdriveToken}` } }
+    );
+    const searchData = await searchRes.json();
+    const fileId = searchData.files?.[0]?.id;
+    if (!fileId) { gdriveSetStatus('백업 파일이 없습니다.', '#d97706'); return; }
+
+    const fileRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      { headers: { Authorization: `Bearer ${gdriveToken}` } }
+    );
+    const data = await fileRes.json();
+    state = { ...state, ...data };
+    saveState();
+    renderDeliveryList();
+    renderHistory();
+    renderParsedPreview();
+    renderClientSelects();
+    renderClientList();
+    renderFavorites();
+    renderStats();
+    gdriveSetStatus('✅ 복원 완료', '#16a34a');
+    toast('구글 드라이브에서 복원 완료');
+  } catch(e) {
+    gdriveSetStatus('❌ 복원 실패: ' + e.message, '#dc2626');
+  }
+}
+</script>
+</body>
+</html>
