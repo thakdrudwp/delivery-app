@@ -1326,7 +1326,7 @@ function renderClientListModal() {
         ${!c.address && !c.memo && !c.pass ? `<div style="font-size:0.8rem;color:#9ca3af;">등록된 정보가 없습니다.</div>` : ''}
       </div>
       <div id="modal-edit-${i}" style="display:none;">
-        <div style="font-size:0.9rem;font-weight:700;margin-bottom:6px;">${esc(c.name)}</div>
+        <input type="text" id="modal-name-${i}" value="${esc(c.name)}" placeholder="상호명" style="width:100%;font-size:0.88rem;font-weight:700;padding:4px 8px;border:1px solid #1a56db;border-radius:6px;margin-bottom:4px;" />
         <input type="text" id="modal-addr-${i}" value="${esc(c.address||'')}" placeholder="📍 주소" style="width:100%;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:4px;" />
         <input type="text" id="modal-memo-${i}" value="${esc(c.memo||'')}" placeholder="📝 메모" style="width:100%;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:4px;" />
         <div style="position:relative;margin-bottom:6px;">
@@ -1353,10 +1353,14 @@ function cancelModalEdit(i) {
 }
 
 function saveModalClientField(i) {
+  const newName = document.getElementById(`modal-name-${i}`).value.trim();
+  if (!newName) { toast('상호명을 입력하세요.'); return; }
+  state.clients[i].name    = newName;
   state.clients[i].address = document.getElementById(`modal-addr-${i}`).value.trim();
   state.clients[i].memo    = document.getElementById(`modal-memo-${i}`).value.trim();
   state.clients[i].pass    = document.getElementById(`modal-pass-input-${i}`).value.trim();
   saveState();
+  renderClientSelects();
   renderClientListModal();
   toast('저장됨');
 }
