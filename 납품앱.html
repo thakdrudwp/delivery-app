@@ -442,7 +442,7 @@
     </div>
     <div style="font-size:0.78rem;color:#6b7280;margin-bottom:8px;">번호를 눌러 방문 순서(1~5)를 지정하세요.</div>
     <div id="navi-client-list"></div>
-    <button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="startNavi()">🗺️ 네이버 네비게이션 시작</button>
+    <button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="startNavi()">🗺️ 네비게이션 시작</button>
   </div>
 
   <!-- 납품건 목록 -->
@@ -664,7 +664,7 @@
   <div class="modal-box">
     <div class="modal-title">🧭 네비게이션 선택</div>
     <div id="navi-waypoint-list" style="margin-bottom:12px;max-height:200px;overflow-y:auto;"></div>
-    <div style="font-size:0.78rem;color:#6b7280;margin-bottom:10px;">티맵: 전체 경로 한 번에 / 네이버·카카오: 순서대로 하나씩</div>
+    <div style="font-size:0.78rem;color:#6b7280;margin-bottom:10px;">순서대로 하나씩 열립니다. 도착 후 다음 목적지 버튼을 누르세요.</div>
     <div style="display:flex;flex-direction:column;gap:8px;">
       <button class="btn btn-primary btn-full" onclick="launchNavi('tmap')">🗺️ 티맵으로 시작</button>
       <button class="btn btn-light btn-full" onclick="launchNavi('naver')">🗺️ 네이버지도로 시작</button>
@@ -1542,19 +1542,9 @@ function launchNavi(type) {
   naviType = type;
   closeModal('navi-select-modal');
   naviCurrentIdx = 0;
-  if (type === 'tmap') {
-    const goal = naviWaypoints[naviWaypoints.length - 1];
-    const vias = naviWaypoints.slice(0, -1);
-    let url = `tmap://route?goalname=${encodeURIComponent(goal.name)}&goaladdr=${encodeURIComponent(goal.address)}`;
-    vias.forEach((v, i) => {
-      url += `&via${i+1}name=${encodeURIComponent(v.name)}&via${i+1}addr=${encodeURIComponent(v.address)}`;
-    });
-    window.open(url, '_blank');
-  } else {
-    openNaviOne(type);
-    renderNaviStepModal();
-    document.getElementById('navi-step-modal').classList.add('open');
-  }
+  openNaviOne(type);
+  renderNaviStepModal();
+  document.getElementById('navi-step-modal').classList.add('open');
 }
 
 function renderNaviStepModal() {
@@ -1576,12 +1566,17 @@ function renderNaviStepModal() {
 
 function openNaviOne(type) {
   const w = naviWaypoints[naviCurrentIdx];
-  if (type === 'naver') {
-    window.open(`nmap://route/car?dname=${encodeURIComponent(w.name)}&daddr=${encodeURIComponent(w.address)}&appname=delivery`, '_blank');
-    setTimeout(() => window.open(`https://map.naver.com/v5/search/${encodeURIComponent(w.address)}`, '_blank'), 500);
+  const addr = encodeURIComponent(w.address);
+  const name = encodeURIComponent(w.name);
+  if (type === 'tmap') {
+    // 티맵 앱 스킴: goalname + goaladdr (주소 기반, 좌표 불필요)
+    location.href = `tmap://route?goalname=${name}&goaladdr=${addr}`;
+  } else if (type === 'naver') {
+    // 네이버지도: 웹 검색 (모바일에서 앱으로 연동됨)
+    window.open(`https://map.naver.com/v5/search/${w.address}`, '_blank');
   } else if (type === 'kakao') {
-    window.open(`kakaomap://route?ep=${encodeURIComponent(w.address)}&by=CAR`, '_blank');
-    setTimeout(() => window.open(`https://map.kakao.com/link/to/${encodeURIComponent(w.name)},${encodeURIComponent(w.address)}`, '_blank'), 500);
+    // 카카오맵: 웹 길찾기 링크 (모바일에서 앱으로 연동됨)
+    window.open(`https://map.kakao.com/link/to/${name},${addr}`, '_blank');
   }
 }
 
