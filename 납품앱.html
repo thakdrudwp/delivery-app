@@ -1542,26 +1542,51 @@ function gdriveTokenClear() {
   localStorage.removeItem(GDRIVE_TOKEN_EXP_KEY);
 }
 
+let gdriveTokenClient = null;
+let gdriveRefreshTimer = null;
+
+function gdriveScheduleRefresh(msUntilExpiry) {
+  clearTimeout(gdriveRefreshTimer);
+  const delay = Math.max(msUntilExpiry - 5 * 60 * 1000, 10000); // 만료 5분 전 or 최소 10초 후
+  gdriveRefreshTimer = setTimeout(() => {
+    if (gdriveTokenClient) {
+      gdriveTokenClient.requestAccessToken({ prompt: '' }); // silent refresh
+    }
+  }, delay);
+}
+
 function gdriveInit() {
   const saved = gdriveTokenLoad();
   if (saved) {
     gdriveToken = saved;
     gdriveSetLoggedIn();
+    const exp = parseInt(localStorage.getItem(GDRIVE_TOKEN_EXP_KEY) || '0');
+    const msLeft = exp - Date.now();
+    if (msLeft > 0) gdriveScheduleRefresh(msLeft);
   }
 }
 
 function gdriveLogin() {
-  const client = google.accounts.oauth2.initTokenClient({
+  gdriveTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GDRIVE_CLIENT_ID,
     scope: GDRIVE_SCOPE,
     callback: (resp) => {
-      if (resp.error) { gdriveSetStatus('로그인 실패: ' + resp.error, '#dc2626'); return; }
+      if (resp.error) {
+        if (resp.error !== 'interaction_required') {
+          gdriveSetStatus('로그인 실패: ' + resp.error, '#dc2626');
+        }
+        return;
+      }
       gdriveToken = resp.access_token;
-      gdriveTokenSave(resp.access_token, resp.expires_in || 3600);
+      const expiresIn = resp.expires_in || 3600;
+      gdriveTokenSave(resp.access_token, expiresIn);
       gdriveSetLoggedIn();
+      gdriveScheduleRefresh(expiresIn * 1000);
     },
   });
-  client.requestAccessToken();
+  // 저장된 토큰 있으면 silent, 없으면 팝업
+  const hasSaved = !!gdriveTokenLoad();
+  gdriveTokenClient.requestAccessToken({ prompt: hasSaved ? '' : 'select_account' });
 }
 
 function gdriveLogout() {
