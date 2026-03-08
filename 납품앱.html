@@ -660,6 +660,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderParsedPreview();
   renderFavorites();
   renderStats();
+  setTimeout(gdriveInit, 500);
 });
 
 /* ═══════════════════════════════════
@@ -903,6 +904,7 @@ function saveDelivery() {
   renderParsedPreview();
   renderClientSelects();
   toast(`${client} 납품건 저장됨`);
+  if (gdriveToken) gdriveBackup(true);
 }
 
 /* ═══════════════════════════════════
@@ -1224,6 +1226,7 @@ function markDone() {
   state.deliveries = state.deliveries.filter(x => x.id !== d.id);
   saveState();
   toast(`${d.client} 납품 완료 처리됨`);
+  if (gdriveToken) gdriveBackup(true);
   closeDetail();
 }
 
@@ -1505,11 +1508,46 @@ function toast(msg) {
 const GDRIVE_CLIENT_ID = '497300039730-4tf6luso79co482dfne7jagde250a9av.apps.googleusercontent.com';
 const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 const GDRIVE_FILE_NAME = 'delivery_backup.json';
+const GDRIVE_TOKEN_KEY = 'gdrive_token_v1';
+const GDRIVE_TOKEN_EXP_KEY = 'gdrive_token_exp_v1';
 let gdriveToken = null;
 
 function gdriveSetStatus(msg, color='#6b7280') {
   const el = document.getElementById('gdrive-status');
   if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+function gdriveSetLoggedIn() {
+  document.getElementById('gdrive-login-btn').style.display = 'none';
+  document.getElementById('gdrive-logout-btn').style.display = '';
+  document.getElementById('gdrive-actions').style.display = '';
+  gdriveSetStatus('✅ 로그인됨 — 자동 백업 중', '#16a34a');
+}
+
+function gdriveTokenSave(token, expiresIn) {
+  const exp = Date.now() + (expiresIn - 60) * 1000;
+  localStorage.setItem(GDRIVE_TOKEN_KEY, token);
+  localStorage.setItem(GDRIVE_TOKEN_EXP_KEY, exp.toString());
+}
+
+function gdriveTokenLoad() {
+  const token = localStorage.getItem(GDRIVE_TOKEN_KEY);
+  const exp = parseInt(localStorage.getItem(GDRIVE_TOKEN_EXP_KEY) || '0');
+  if (token && Date.now() < exp) return token;
+  return null;
+}
+
+function gdriveTokenClear() {
+  localStorage.removeItem(GDRIVE_TOKEN_KEY);
+  localStorage.removeItem(GDRIVE_TOKEN_EXP_KEY);
+}
+
+function gdriveInit() {
+  const saved = gdriveTokenLoad();
+  if (saved) {
+    gdriveToken = saved;
+    gdriveSetLoggedIn();
+  }
 }
 
 function gdriveLogin() {
@@ -1519,10 +1557,8 @@ function gdriveLogin() {
     callback: (resp) => {
       if (resp.error) { gdriveSetStatus('로그인 실패: ' + resp.error, '#dc2626'); return; }
       gdriveToken = resp.access_token;
-      document.getElementById('gdrive-login-btn').style.display = 'none';
-      document.getElementById('gdrive-logout-btn').style.display = '';
-      document.getElementById('gdrive-actions').style.display = '';
-      gdriveSetStatus('✅ 로그인됨 — 백업/복원 가능', '#16a34a');
+      gdriveTokenSave(resp.access_token, resp.expires_in || 3600);
+      gdriveSetLoggedIn();
     },
   });
   client.requestAccessToken();
@@ -1531,15 +1567,16 @@ function gdriveLogin() {
 function gdriveLogout() {
   if (gdriveToken) google.accounts.oauth2.revoke(gdriveToken);
   gdriveToken = null;
+  gdriveTokenClear();
   document.getElementById('gdrive-login-btn').style.display = '';
   document.getElementById('gdrive-logout-btn').style.display = 'none';
   document.getElementById('gdrive-actions').style.display = 'none';
   gdriveSetStatus('로그인 후 백업/복원 가능합니다.');
 }
 
-async function gdriveBackup() {
-  if (!gdriveToken) { toast('먼저 구글 로그인하세요.'); return; }
-  gdriveSetStatus('백업 중…', '#1a56db');
+async function gdriveBackup(silent=false) {
+  if (!gdriveToken) { if (!silent) toast('먼저 구글 로그인하세요.'); return; }
+  if (!silent) gdriveSetStatus('백업 중…', '#1a56db');
   try {
     // 기존 파일 찾기
     const searchRes = await fetch(
