@@ -341,7 +341,12 @@
 <!-- 헤더 -->
 <header id="app-header">
   <h1>🚚 납품 관리</h1>
-  <div id="hdr-date"></div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div id="hdr-date"></div>
+    <button id="hdr-cloud-btn" onclick="openDevMenu()" style="background:none;border:none;cursor:pointer;font-size:1.3rem;line-height:1;padding:2px;" title="개발자 메뉴">
+      <span id="hdr-cloud-icon">☁️</span>
+    </button>
+  </div>
 </header>
 
 <!-- 탭 -->
@@ -432,7 +437,11 @@
   <!-- 네비게이션 경로 -->
   <div class="card" id="navi-section">
     <div class="card-title">🧭 오늘 배송 경로</div>
-    <div style="font-size:0.78rem;color:#6b7280;margin-bottom:8px;">거래처 옆 번호를 눌러 방문 순서(1~5)를 지정하세요.</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button id="navi-tab-short" class="btn btn-sm" style="flex:1;background:#dbeafe;color:#1e40af;border:2px solid #1e40af;font-weight:700;" onclick="switchNaviTab('short')">🏙️ 단거리</button>
+      <button id="navi-tab-long"  class="btn btn-sm" style="flex:1;background:#fff;color:#6b7280;border:2px solid #d1d5db;" onclick="switchNaviTab('long')">🛣️ 장거리</button>
+    </div>
+    <div style="font-size:0.78rem;color:#6b7280;margin-bottom:8px;">번호를 눌러 방문 순서(1~5)를 지정하세요.</div>
     <div id="navi-client-list"></div>
     <button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="startNavi()">🗺️ 네이버 네비게이션 시작</button>
   </div>
@@ -548,8 +557,12 @@
       <input type="text" id="client-add-input" placeholder="거래처명" />
       <button class="btn btn-success" onclick="addClient()">추가</button>
     </div>
-    <div style="margin-bottom:8px;">
-      <input type="text" id="client-add-address" placeholder="주소 (선택, 예: 부산시 해운대구 ...)" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
+    <div style="margin-bottom:6px;">
+      <input type="text" id="client-add-address" placeholder="주소 (예: 부산시 해운대구 ...)" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button id="add-type-short" class="btn btn-sm" style="flex:1;background:#dbeafe;color:#1e40af;border:2px solid #1e40af;font-weight:700;" onclick="selectAddType('short')">🏙️ 단거리</button>
+      <button id="add-type-long" class="btn btn-sm" style="flex:1;background:#fff;color:#6b7280;border:2px solid #d1d5db;" onclick="selectAddType('long')">🛣️ 장거리</button>
     </div>
     <div id="client-list"></div>
     <div style="display:flex;gap:6px;margin-top:10px;">
@@ -561,50 +574,74 @@
     </div>
   </div>
 
+  <!-- 전체 데이터 백업 -->
+  <div class="card">
+    <div class="card-title">📦 전체 데이터 백업</div>
+    <p style="font-size:0.78rem;color:#6b7280;margin-bottom:8px;">구글 로그인 없이 전체 데이터를 파일로 저장하고 복원합니다.</p>
+    <button class="btn btn-primary btn-full" style="margin-bottom:6px;" onclick="exportAllData()">⬇️ 전체 데이터 내보내기</button>
+    <label class="btn btn-light btn-full" style="text-align:center;cursor:pointer;margin:0;">
+      ⬆️ 전체 데이터 가져오기
+      <input type="file" accept=".json" style="display:none;" onchange="importAllData(event)" />
+    </label>
+  </div>
+
   <!-- CSV 내보내기 -->
   <div class="card">
-    <div class="card-title">💾 데이터 내보내기</div>
+    <div class="card-title">💾 CSV 내보내기</div>
     <button class="btn btn-primary btn-full" style="margin-bottom:6px;" onclick="exportCSV()">📊 전체 이력 CSV</button>
     <button class="btn btn-light btn-full" onclick="exportTodayCSV()">📊 오늘 납품 CSV</button>
   </div>
 
-  <!-- 구글 드라이브 백업 -->
-  <div class="card">
-    <div class="card-title">☁️ Google Drive 백업</div>
-    <div id="gdrive-status" style="font-size:0.8rem;color:#6b7280;margin-bottom:8px;">로그인 후 백업/복원 가능합니다.</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button id="gdrive-login-btn" class="btn btn-primary" style="flex:1;" onclick="gdriveLogin()">🔑 구글 로그인</button>
-      <button id="gdrive-logout-btn" class="btn btn-light" style="flex:1;display:none;" onclick="gdriveLogout()">로그아웃</button>
-    </div>
-    <div id="gdrive-actions" style="display:none;margin-top:8px;display:none;">
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-success" style="flex:1;" onclick="gdriveBackup()">⬆️ 백업</button>
-        <button class="btn btn-warning" style="flex:1;" onclick="gdriveRestore()">⬇️ 복원</button>
-      </div>
-      <div id="gdrive-last-backup" style="font-size:0.75rem;color:#6b7280;margin-top:6px;text-align:center;"></div>
-    </div>
-  </div>
-
-  <!-- 초기화 -->
-  <div class="card">
-    <div class="card-title">🗑️ 데이터 초기화</div>
-    <button class="btn btn-danger btn-full" onclick="confirmReset()">전체 데이터 초기화</button>
-  </div>
 
 </div>
 
 <!-- 토스트 -->
 <div id="toast"></div>
 
-<!-- 품목 수정 모달 -->
-<div class="modal-overlay" id="gdrive-login-modal">
-  <div class="modal-box" style="text-align:center;">
-    <div style="font-size:2rem;margin-bottom:8px;">☁️</div>
-    <div class="modal-title">구글 드라이브 로그인 필요</div>
-    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:16px;">자동 백업을 위해 구글 로그인이 필요합니다.<br>로그인하면 납품 데이터가 자동으로 백업됩니다.</p>
-    <div class="modal-actions">
-      <button class="btn btn-primary" onclick="closeModal('gdrive-login-modal');gdriveLogin();">구글 로그인</button>
-      <button class="btn btn-light" onclick="closeModal('gdrive-login-modal')">나중에</button>
+<!-- 개발자 메뉴 모달 -->
+<div class="modal-overlay" id="dev-menu-modal">
+  <div class="modal-box">
+    <!-- PIN 입력 화면 -->
+    <div id="dev-pin-view">
+      <div style="text-align:center;font-size:1.5rem;margin-bottom:6px;">🔐</div>
+      <div class="modal-title" style="text-align:center;">개발자 전용 메뉴</div>
+      <p style="font-size:0.82rem;color:#6b7280;text-align:center;margin-bottom:12px;">PIN 번호를 입력하세요.</p>
+      <input type="password" id="dev-pin-input" placeholder="PIN 입력" inputmode="numeric"
+        style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem;text-align:center;letter-spacing:6px;margin-bottom:8px;"
+        onkeydown="if(event.key==='Enter')checkDevPin()" />
+      <div id="dev-pin-error" style="font-size:0.78rem;color:#dc2626;text-align:center;min-height:18px;margin-bottom:8px;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="checkDevPin()">확인</button>
+        <button class="btn btn-light" onclick="closeModal('dev-menu-modal')">취소</button>
+      </div>
+    </div>
+    <!-- 개발자 메뉴 화면 -->
+    <div id="dev-menu-view" style="display:none;">
+      <div style="text-align:center;font-size:1.5rem;margin-bottom:6px;">⚙️</div>
+      <div class="modal-title" style="text-align:center;">개발자 메뉴</div>
+      <!-- 구글 드라이브 -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:0.78rem;font-weight:700;color:#374151;margin-bottom:6px;">☁️ Google Drive 백업</div>
+        <div id="dev-gdrive-status" style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;"></div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <button id="dev-gdrive-login-btn" class="btn btn-primary" style="flex:1;font-size:0.82rem;" onclick="gdriveLogin()">🔑 구글 로그인</button>
+          <button id="dev-gdrive-logout-btn" class="btn btn-light" style="flex:1;font-size:0.82rem;display:none;" onclick="gdriveLogout()">로그아웃</button>
+        </div>
+        <div id="dev-gdrive-actions" style="display:none;">
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-success" style="flex:1;font-size:0.82rem;" onclick="gdriveBackup()">⬆️ 백업</button>
+            <button class="btn btn-warning" style="flex:1;font-size:0.82rem;" onclick="gdriveRestore()">⬇️ 복원</button>
+          </div>
+          <div id="dev-gdrive-last-backup" style="font-size:0.72rem;color:#6b7280;margin-top:4px;text-align:center;"></div>
+        </div>
+      </div>
+      <hr style="border:none;border-top:1px solid #f3f4f6;margin-bottom:12px;">
+      <!-- 데이터 초기화 -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:0.78rem;font-weight:700;color:#374151;margin-bottom:6px;">🗑️ 데이터 초기화</div>
+        <button class="btn btn-danger btn-full" onclick="closeModal('dev-menu-modal');confirmReset();">전체 데이터 초기화</button>
+      </div>
+      <button class="btn btn-light btn-full" onclick="closeModal('dev-menu-modal')">닫기</button>
     </div>
   </div>
 </div>
@@ -652,9 +689,9 @@ let state = {
   apiKey: '',
   geminiKey: '',
   clients: [
-    { name: '마트A', address: '', memo: '' },
-    { name: '마트B', address: '', memo: '' },
-    { name: '식당C', address: '', memo: '' },
+    { name: '마트A', address: '', memo: '', type: 'short' },
+    { name: '마트B', address: '', memo: '', type: 'short' },
+    { name: '식당C', address: '', memo: '', type: 'short' },
   ],
   deliveries: [],     // 진행중 납품건
   history: [],        // 완료된 납품건
@@ -676,8 +713,8 @@ function loadState() {
       if (state.clients.length && typeof state.clients[0] === 'string') {
         state.clients = state.clients.map(c => ({ name: c, address: '', memo: '' }));
       }
-      // memo 필드 없는 기존 객체 마이그레이션
-      state.clients = state.clients.map(c => ({ memo: '', ...c }));
+      // memo, type 필드 없는 기존 객체 마이그레이션
+      state.clients = state.clients.map(c => ({ memo: '', type: 'short', ...c }));
     }
   } catch(e) {}
 }
@@ -969,15 +1006,28 @@ function handleClientChange() {
   document.getElementById('new-client-row').style.display = v === '__new__' ? '' : 'none';
 }
 
+let addClientType = 'short';
+
+function selectAddType(t) {
+  addClientType = t;
+  document.getElementById('add-type-short').style.background = t === 'short' ? '#dbeafe' : '#fff';
+  document.getElementById('add-type-short').style.color = t === 'short' ? '#1e40af' : '#6b7280';
+  document.getElementById('add-type-short').style.borderColor = t === 'short' ? '#1e40af' : '#d1d5db';
+  document.getElementById('add-type-long').style.background = t === 'long' ? '#fef9c3' : '#fff';
+  document.getElementById('add-type-long').style.color = t === 'long' ? '#854d0e' : '#6b7280';
+  document.getElementById('add-type-long').style.borderColor = t === 'long' ? '#854d0e' : '#d1d5db';
+}
+
 function addClient() {
   const name = document.getElementById('client-add-input').value.trim();
   const address = document.getElementById('client-add-address').value.trim();
   if (!name) return;
   if (!state.clients.find(c => c.name === name)) {
-    state.clients.push({ name, address });
+    state.clients.push({ name, address, memo: '', type: addClientType });
     saveState();
     renderClientSelects();
     renderClientList();
+    renderNaviClientList();
     renderHistoryClientFilter();
     document.getElementById('client-add-input').value = '';
     document.getElementById('client-add-address').value = '';
@@ -987,10 +1037,32 @@ function addClient() {
 
 
 function renderClientList() {
-  document.getElementById('client-list').innerHTML = state.clients.map((c, i) => `
+  const shorts = state.clients.filter(c => c.type !== 'long');
+  const longs  = state.clients.filter(c => c.type === 'long');
+
+  const renderGroup = (list, label, color) => {
+    if (!list.length) return '';
+    const items = list.map((c) => {
+      const i = state.clients.indexOf(c);
+      return clientRow(c, i);
+    }).join('');
+    return `<div style="font-size:0.78rem;font-weight:700;color:${color};padding:6px 0 4px;">${label}</div>${items}`;
+  };
+
+  document.getElementById('client-list').innerHTML =
+    renderGroup(shorts, '🏙️ 단거리', '#1e40af') +
+    renderGroup(longs,  '🛣️ 장거리', '#854d0e');
+}
+
+function clientRow(c, i) {
+  const isLong = c.type === 'long';
+  return `
     <div style="padding:8px 0;border-bottom:1px solid #f3f4f6;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <span style="font-size:0.88rem;font-weight:600;">${esc(c.name)}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:0.88rem;font-weight:600;">${esc(c.name)}</span>
+          <button onclick="toggleClientType(${i})" style="font-size:0.7rem;padding:2px 7px;border-radius:10px;border:1px solid ${isLong?'#854d0e':'#1e40af'};background:${isLong?'#fef9c3':'#dbeafe'};color:${isLong?'#854d0e':'#1e40af'};cursor:pointer;">${isLong?'🛣️장거리':'🏙️단거리'}</button>
+        </div>
         <div style="display:flex;gap:4px;">
           <button class="btn btn-sm" style="background:#e0f2fe;color:#0369a1;font-size:0.75rem;" onclick="openNaverMap('${esc(c.address || c.name)}')">🗺️지도</button>
           <button class="btn btn-danger btn-sm" onclick="removeClient(${i})">삭제</button>
@@ -1006,9 +1078,16 @@ function renderClientList() {
           <button onclick="toggleMemoVisibility(${i})" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.85rem;" id="memo-eye-${i}">👁️</button>
         </div>
       </div>
-      ${c.memo ? `<div id="memo-hint-${i}" style="font-size:0.72rem;color:#92400e;margin-top:2px;">🔒 메모 있음 — 👁️ 눌러서 확인</div>` : ''}
+      ${c.memo ? `<div style="font-size:0.72rem;color:#92400e;margin-top:2px;">🔒 메모 있음 — 👁️ 눌러서 확인</div>` : ''}
     </div>
-  `).join('');
+  `;
+}
+
+function toggleClientType(i) {
+  state.clients[i].type = state.clients[i].type === 'long' ? 'short' : 'long';
+  saveState();
+  renderClientList();
+  renderNaviClientList();
 }
 
 function revealDetailMemo() {
@@ -1051,6 +1130,49 @@ function removeClient(i) {
   saveState();
   renderClientSelects();
   renderClientList();
+}
+
+function exportAllData() {
+  const data = JSON.stringify({ ...state, _exportedAt: new Date().toISOString() }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `납품앱_전체백업_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('전체 데이터 내보내기 완료');
+}
+
+function importAllData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!confirm('현재 데이터를 모두 덮어씁니다. 계속할까요?')) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      delete data._exportedAt;
+      state = { ...state, ...data };
+      // 마이그레이션
+      if (state.clients.length && typeof state.clients[0] === 'string') {
+        state.clients = state.clients.map(c => ({ name: c, address: '', memo: '', type: 'short' }));
+      }
+      state.clients = state.clients.map(c => ({ memo: '', type: 'short', ...c }));
+      saveState();
+      renderClientSelects();
+      renderClientList();
+      renderNaviClientList();
+      renderDeliveryList();
+      renderHistory();
+      renderHistoryClientFilter();
+      renderFavorites();
+      renderStats();
+      toast('전체 데이터 가져오기 완료');
+    } catch(e) { toast('파일 읽기 실패'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 function exportClients() {
@@ -1102,13 +1224,31 @@ function openNaverMap(address) {
    네비게이션 경로
 ═══════════════════════════════════ */
 let naviOrder = {}; // { clientName: 순서번호(1~5) }
+let naviTab = 'short'; // 현재 탭
+
+function switchNaviTab(tab) {
+  naviTab = tab;
+  const shortBtn = document.getElementById('navi-tab-short');
+  const longBtn  = document.getElementById('navi-tab-long');
+  if (shortBtn && longBtn) {
+    shortBtn.style.background   = tab === 'short' ? '#dbeafe' : '#fff';
+    shortBtn.style.color        = tab === 'short' ? '#1e40af' : '#6b7280';
+    shortBtn.style.borderColor  = tab === 'short' ? '#1e40af' : '#d1d5db';
+    shortBtn.style.fontWeight   = tab === 'short' ? '700' : '400';
+    longBtn.style.background    = tab === 'long'  ? '#fef9c3' : '#fff';
+    longBtn.style.color         = tab === 'long'  ? '#854d0e' : '#6b7280';
+    longBtn.style.borderColor   = tab === 'long'  ? '#854d0e' : '#d1d5db';
+    longBtn.style.fontWeight    = tab === 'long'  ? '700' : '400';
+  }
+  renderNaviClientList();
+}
 
 function renderNaviClientList() {
   const el = document.getElementById('navi-client-list');
   if (!el) return;
-  const clients = state.clients.filter(c => c.address);
+  const clients = state.clients.filter(c => c.address && (c.type || 'short') === naviTab);
   if (!clients.length) {
-    el.innerHTML = `<div style="font-size:0.82rem;color:#9ca3af;text-align:center;padding:8px 0;">설정 탭에서 거래처 주소를 먼저 입력하세요.</div>`;
+    el.innerHTML = `<div style="font-size:0.82rem;color:#9ca3af;text-align:center;padding:8px 0;">주소가 등록된 거래처가 없습니다.</div>`;
     return;
   }
   el.innerHTML = clients.map(c => {
@@ -1128,9 +1268,7 @@ function renderNaviClientList() {
 }
 
 function setNaviOrder(name, n) {
-  // 같은 번호 이미 있으면 해제
   Object.keys(naviOrder).forEach(k => { if (naviOrder[k] === n) delete naviOrder[k]; });
-  // 같은 거래처 다시 누르면 해제
   if (naviOrder[name] === n) { delete naviOrder[name]; }
   else { naviOrder[name] = n; }
   renderNaviClientList();
@@ -1499,6 +1637,52 @@ function saveItemEdit() {
   toast('저장됨');
 }
 
+/* ═══════════════════════════════════
+   개발자 메뉴
+═══════════════════════════════════ */
+const DEV_PIN_HASH = '60728d3d30e9f19650aa8aa2495cd80e4726799659ff3106f6ff2a29ecbf6348';
+
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function openDevMenu() {
+  document.getElementById('dev-pin-view').style.display = '';
+  document.getElementById('dev-menu-view').style.display = 'none';
+  document.getElementById('dev-pin-input').value = '';
+  document.getElementById('dev-pin-error').textContent = '';
+  document.getElementById('dev-menu-modal').classList.add('open');
+  setTimeout(() => document.getElementById('dev-pin-input').focus(), 100);
+}
+
+async function checkDevPin() {
+  const input = document.getElementById('dev-pin-input').value;
+  const inputHash = await hashPin(input);
+  if (inputHash === DEV_PIN_HASH) {
+    document.getElementById('dev-pin-view').style.display = 'none';
+    document.getElementById('dev-menu-view').style.display = '';
+    // 현재 로그인 상태 반영
+    const loginBtn  = document.getElementById('dev-gdrive-login-btn');
+    const logoutBtn = document.getElementById('dev-gdrive-logout-btn');
+    const actions   = document.getElementById('dev-gdrive-actions');
+    if (gdriveToken) {
+      if (loginBtn)  loginBtn.style.display  = 'none';
+      if (logoutBtn) logoutBtn.style.display = '';
+      if (actions)   actions.style.display   = '';
+      gdriveSetStatus('✅ 로그인됨 — 자동 백업 중', '#16a34a');
+    } else {
+      if (loginBtn)  loginBtn.style.display  = '';
+      if (logoutBtn) logoutBtn.style.display = 'none';
+      if (actions)   actions.style.display   = 'none';
+      gdriveSetStatus('로그인 후 백업/복원 가능합니다.');
+    }
+  } else {
+    document.getElementById('dev-pin-error').textContent = '❌ 개발자 전용 메뉴입니다.';
+    document.getElementById('dev-pin-input').value = '';
+  }
+}
+
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
@@ -1745,15 +1929,27 @@ const GDRIVE_TOKEN_EXP_KEY = 'gdrive_token_exp_v1';
 let gdriveToken = null;
 
 function gdriveSetStatus(msg, color='#6b7280') {
-  const el = document.getElementById('gdrive-status');
+  const el = document.getElementById('dev-gdrive-status');
   if (el) { el.textContent = msg; el.style.color = color; }
 }
 
 function gdriveSetLoggedIn() {
-  document.getElementById('gdrive-login-btn').style.display = 'none';
-  document.getElementById('gdrive-logout-btn').style.display = '';
-  document.getElementById('gdrive-actions').style.display = '';
+  // 개발자 메뉴 버튼 상태
+  const loginBtn  = document.getElementById('dev-gdrive-login-btn');
+  const logoutBtn = document.getElementById('dev-gdrive-logout-btn');
+  const actions   = document.getElementById('dev-gdrive-actions');
+  if (loginBtn)  loginBtn.style.display  = 'none';
+  if (logoutBtn) logoutBtn.style.display = '';
+  if (actions)   actions.style.display   = '';
   gdriveSetStatus('✅ 로그인됨 — 자동 백업 중', '#16a34a');
+  // 헤더 구름 아이콘 초록색
+  updateCloudIcon(true);
+}
+
+function updateCloudIcon(loggedIn) {
+  const icon = document.getElementById('hdr-cloud-icon');
+  if (!icon) return;
+  icon.textContent = loggedIn ? '🟢' : '☁️';
 }
 
 function gdriveTokenSave(token, expiresIn) {
@@ -1796,10 +1992,7 @@ function gdriveInit() {
     const msLeft = exp - Date.now();
     if (msLeft > 0) gdriveScheduleRefresh(msLeft);
   } else {
-    // 토큰 없으면 로그인 안내 모달 표시
-    setTimeout(() => {
-      document.getElementById('gdrive-login-modal').classList.add('open');
-    }, 1000);
+    updateCloudIcon(false);
   }
 }
 
@@ -1830,10 +2023,14 @@ function gdriveLogout() {
   if (gdriveToken) google.accounts.oauth2.revoke(gdriveToken);
   gdriveToken = null;
   gdriveTokenClear();
-  document.getElementById('gdrive-login-btn').style.display = '';
-  document.getElementById('gdrive-logout-btn').style.display = 'none';
-  document.getElementById('gdrive-actions').style.display = 'none';
+  const loginBtn  = document.getElementById('dev-gdrive-login-btn');
+  const logoutBtn = document.getElementById('dev-gdrive-logout-btn');
+  const actions   = document.getElementById('dev-gdrive-actions');
+  if (loginBtn)  loginBtn.style.display  = '';
+  if (logoutBtn) logoutBtn.style.display = 'none';
+  if (actions)   actions.style.display   = 'none';
   gdriveSetStatus('로그인 후 백업/복원 가능합니다.');
+  updateCloudIcon(false);
 }
 
 async function gdriveBackup(silent=false) {
@@ -1868,7 +2065,8 @@ async function gdriveBackup(silent=false) {
     if (!res.ok) throw new Error('백업 실패');
 
     const now = new Date().toLocaleString('ko-KR');
-    document.getElementById('gdrive-last-backup').textContent = `마지막 백업: ${now}`;
+    const lastBackupEl = document.getElementById('dev-gdrive-last-backup');
+    if (lastBackupEl) lastBackupEl.textContent = `마지막 백업: ${now}`;
     gdriveSetStatus('✅ 백업 완료', '#16a34a');
     toast('구글 드라이브 백업 완료');
   } catch(e) {
