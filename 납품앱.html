@@ -575,6 +575,18 @@
 <div id="toast"></div>
 
 <!-- 품목 수정 모달 -->
+<div class="modal-overlay" id="gdrive-login-modal">
+  <div class="modal-box" style="text-align:center;">
+    <div style="font-size:2rem;margin-bottom:8px;">☁️</div>
+    <div class="modal-title">구글 드라이브 로그인 필요</div>
+    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:16px;">자동 백업을 위해 구글 로그인이 필요합니다.<br>로그인하면 납품 데이터가 자동으로 백업됩니다.</p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeModal('gdrive-login-modal');gdriveLogin();">구글 로그인</button>
+      <button class="btn btn-light" onclick="closeModal('gdrive-login-modal')">나중에</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="edit-modal">
   <div class="modal-box">
     <div class="modal-title">품목 수정</div>
@@ -1563,6 +1575,11 @@ function gdriveInit() {
     const exp = parseInt(localStorage.getItem(GDRIVE_TOKEN_EXP_KEY) || '0');
     const msLeft = exp - Date.now();
     if (msLeft > 0) gdriveScheduleRefresh(msLeft);
+  } else {
+    // 토큰 없으면 로그인 안내 모달 표시
+    setTimeout(() => {
+      document.getElementById('gdrive-login-modal').classList.add('open');
+    }, 1000);
   }
 }
 
