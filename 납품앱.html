@@ -429,6 +429,14 @@
 <!-- ===== TAB 2: 검수 ===== -->
 <div id="tab-check" class="section">
 
+  <!-- 네비게이션 경로 -->
+  <div class="card" id="navi-section">
+    <div class="card-title">🧭 오늘 배송 경로</div>
+    <div style="font-size:0.78rem;color:#6b7280;margin-bottom:8px;">거래처 옆 번호를 눌러 방문 순서(1~5)를 지정하세요.</div>
+    <div id="navi-client-list"></div>
+    <button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="startNavi()">🗺️ 네이버 네비게이션 시작</button>
+  </div>
+
   <!-- 납품건 목록 -->
   <div id="check-list-view">
     <div style="display:flex;gap:6px;margin-bottom:8px;">
@@ -448,7 +456,11 @@
         <div class="delivery-card-title" id="detail-client"></div>
         <div class="delivery-card-meta" id="detail-date"></div>
       </div>
-      <div class="delivery-card-badges" id="detail-badges"></div>
+      <!-- 거래처 주소 -->
+      <div id="detail-client-address" style="display:none;margin-top:6px;"></div>
+      <!-- 거래처 메모 (비번 등) -->
+      <div id="detail-client-memo" style="display:none;margin-top:4px;"></div>
+      <div class="delivery-card-badges" id="detail-badges" style="margin-top:6px;"></div>
     </div>
     <div class="summary-bar" id="detail-summary">
       <div>품목 <span id="ds-items">0</span>종</div>
@@ -532,11 +544,21 @@
   <!-- 거래처 관리 -->
   <div class="card">
     <div class="card-title">🏪 거래처 관리</div>
-    <div class="row2" style="margin-bottom:8px;">
-      <input type="text" id="client-add-input" placeholder="새 거래처명" />
+    <div class="row2" style="margin-bottom:6px;">
+      <input type="text" id="client-add-input" placeholder="거래처명" />
       <button class="btn btn-success" onclick="addClient()">추가</button>
     </div>
+    <div style="margin-bottom:8px;">
+      <input type="text" id="client-add-address" placeholder="주소 (선택, 예: 부산시 해운대구 ...)" style="width:100%;font-size:0.85rem;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;" />
+    </div>
     <div id="client-list"></div>
+    <div style="display:flex;gap:6px;margin-top:10px;">
+      <button class="btn btn-primary" style="flex:1;font-size:0.8rem;" onclick="exportClients()">⬇️ 거래처 내보내기</button>
+      <label class="btn btn-light" style="flex:1;font-size:0.8rem;text-align:center;cursor:pointer;margin:0;">
+        ⬆️ 거래처 가져오기
+        <input type="file" accept=".json" style="display:none;" onchange="importClients(event)" />
+      </label>
+    </div>
   </div>
 
   <!-- CSV 내보내기 -->
@@ -625,10 +647,15 @@
    STATE
 ═══════════════════════════════════ */
 // deliveries: [{ id, date, client, items:[{name,qty,unit,loaded,unloaded}], done, createdAt }]
+// clients: [{ name, address }]
 let state = {
   apiKey: '',
   geminiKey: '',
-  clients: ['마트A', '마트B', '식당C'],
+  clients: [
+    { name: '마트A', address: '', memo: '' },
+    { name: '마트B', address: '', memo: '' },
+    { name: '식당C', address: '', memo: '' },
+  ],
   deliveries: [],     // 진행중 납품건
   history: [],        // 완료된 납품건
   currentDeliveryId: null,
@@ -643,7 +670,15 @@ const STORAGE_KEY = 'delivery_app_v3';
 function loadState() {
   try {
     const s = localStorage.getItem(STORAGE_KEY);
-    if (s) state = { ...state, ...JSON.parse(s) };
+    if (s) {
+      state = { ...state, ...JSON.parse(s) };
+      // 기존 문자열 배열 → 객체 배열 마이그레이션
+      if (state.clients.length && typeof state.clients[0] === 'string') {
+        state.clients = state.clients.map(c => ({ name: c, address: '', memo: '' }));
+      }
+      // memo 필드 없는 기존 객체 마이그레이션
+      state.clients = state.clients.map(c => ({ memo: '', ...c }));
+    }
   } catch(e) {}
 }
 function saveState() {
@@ -667,6 +702,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   renderClientSelects();
   renderClientList();
+  renderNaviClientList();
   renderDeliveryList();
   renderHistory();
   renderParsedPreview();
@@ -683,7 +719,7 @@ function switchTab(id) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   event.currentTarget.classList.add('active');
-  if (id === 'tab-check') { closeDetail(); renderDeliveryList(); }
+  if (id === 'tab-check') { closeDetail(); renderDeliveryList(); renderNaviClientList(); }
   if (id === 'tab-history') { renderHistory(); renderStats(); }
   if (id === 'tab-settings') { renderClientList(); renderHistoryClientFilter(); }
 }
@@ -891,7 +927,7 @@ function saveDelivery() {
   if (client === '__new__') {
     if (!newCli) { toast('거래처명을 입력하세요.'); return; }
     client = newCli;
-    if (!state.clients.includes(client)) state.clients.push(client);
+    if (!state.clients.find(c => c.name === client)) state.clients.push({ name: client, address: '' });
     document.getElementById('new-client-input').value = '';
     renderClientSelects();
     renderHistoryClientFilter();
@@ -923,7 +959,7 @@ function saveDelivery() {
    거래처
 ═══════════════════════════════════ */
 function renderClientSelects() {
-  const opts = state.clients.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  const opts = state.clients.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
   document.getElementById('sel-client').innerHTML =
     `<option value="">-- 거래처 --</option>${opts}<option value="__new__">+ 새 거래처</option>`;
 }
@@ -935,25 +971,79 @@ function handleClientChange() {
 
 function addClient() {
   const name = document.getElementById('client-add-input').value.trim();
+  const address = document.getElementById('client-add-address').value.trim();
   if (!name) return;
-  if (!state.clients.includes(name)) {
-    state.clients.push(name);
+  if (!state.clients.find(c => c.name === name)) {
+    state.clients.push({ name, address });
     saveState();
     renderClientSelects();
     renderClientList();
     renderHistoryClientFilter();
     document.getElementById('client-add-input').value = '';
+    document.getElementById('client-add-address').value = '';
     toast('거래처 추가됨');
   }
 }
 
+
 function renderClientList() {
   document.getElementById('client-list').innerHTML = state.clients.map((c, i) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;">
-      <span style="font-size:0.88rem;">${esc(c)}</span>
-      <button class="btn btn-danger btn-sm" onclick="removeClient(${i})">삭제</button>
+    <div style="padding:8px 0;border-bottom:1px solid #f3f4f6;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:0.88rem;font-weight:600;">${esc(c.name)}</span>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-sm" style="background:#e0f2fe;color:#0369a1;font-size:0.75rem;" onclick="openNaverMap('${esc(c.address || c.name)}')">🗺️지도</button>
+          <button class="btn btn-danger btn-sm" onclick="removeClient(${i})">삭제</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;margin-bottom:4px;">
+        <input type="text" id="client-addr-${i}" value="${esc(c.address||'')}" placeholder="주소 (예: 부산시 해운대구 ...)" style="flex:1;font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;" />
+        <button class="btn btn-sm" style="background:#dcfce7;color:#166534;font-size:0.75rem;white-space:nowrap;" onclick="saveClientField(${i})">저장</button>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <div style="position:relative;flex:1;">
+          <input type="password" id="client-memo-${i}" value="${esc(c.memo||'')}" placeholder="📝 메모 (비번, 배송방식 등)" style="width:100%;font-size:0.8rem;padding:4px 32px 4px 8px;border:1px solid #fbbf24;border-radius:6px;background:#fffbeb;" />
+          <button onclick="toggleMemoVisibility(${i})" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.85rem;" id="memo-eye-${i}">👁️</button>
+        </div>
+      </div>
+      ${c.memo ? `<div id="memo-hint-${i}" style="font-size:0.72rem;color:#92400e;margin-top:2px;">🔒 메모 있음 — 👁️ 눌러서 확인</div>` : ''}
     </div>
   `).join('');
+}
+
+function revealDetailMemo() {
+  const el = document.getElementById('detail-memo-text');
+  const btn = document.getElementById('memo-reveal-btn');
+  if (!el) return;
+  if (el.style.filter) {
+    el.style.filter = '';
+    if (btn) btn.textContent = '🙈 숨기기';
+  } else {
+    el.style.filter = 'blur(5px)';
+    if (btn) btn.textContent = '👁️ 탭해서 확인';
+  }
+}
+
+function toggleMemoVisibility(i) {
+  const input = document.getElementById(`client-memo-${i}`);
+  const eye = document.getElementById(`memo-eye-${i}`);
+  if (input.type === 'password') {
+    input.type = 'text';
+    eye.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    eye.textContent = '👁️';
+  }
+}
+
+function saveClientField(i) {
+  state.clients[i].address = document.getElementById(`client-addr-${i}`).value.trim();
+  const memoEl = document.getElementById(`client-memo-${i}`);
+  if (memoEl) state.clients[i].memo = memoEl.value.trim();
+  saveState();
+  renderClientList();
+  renderNaviClientList();
+  toast('저장됨');
 }
 
 function removeClient(i) {
@@ -961,6 +1051,105 @@ function removeClient(i) {
   saveState();
   renderClientSelects();
   renderClientList();
+}
+
+function exportClients() {
+  const data = JSON.stringify(state.clients, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `거래처_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('거래처 내보내기 완료');
+}
+
+function importClients(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) { toast('올바른 파일이 아닙니다.'); return; }
+      // 문자열 배열도 처리
+      const imported = data.map(c => typeof c === 'string' ? { name: c, address: '' } : c);
+      // 기존에 없는 거래처만 추가
+      let added = 0;
+      imported.forEach(c => {
+        if (!state.clients.find(x => x.name === c.name)) {
+          state.clients.push(c);
+          added++;
+        }
+      });
+      saveState();
+      renderClientList();
+      renderClientSelects();
+      toast(`거래처 ${added}개 추가됨`);
+    } catch(e) { toast('파일 읽기 실패'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function openNaverMap(address) {
+  if (!address) { toast('주소를 먼저 입력하세요.'); return; }
+  window.open(`https://map.naver.com/v5/search/${encodeURIComponent(address)}`, '_blank');
+}
+
+/* ═══════════════════════════════════
+   네비게이션 경로
+═══════════════════════════════════ */
+let naviOrder = {}; // { clientName: 순서번호(1~5) }
+
+function renderNaviClientList() {
+  const el = document.getElementById('navi-client-list');
+  if (!el) return;
+  const clients = state.clients.filter(c => c.address);
+  if (!clients.length) {
+    el.innerHTML = `<div style="font-size:0.82rem;color:#9ca3af;text-align:center;padding:8px 0;">설정 탭에서 거래처 주소를 먼저 입력하세요.</div>`;
+    return;
+  }
+  el.innerHTML = clients.map(c => {
+    const order = naviOrder[c.name] || 0;
+    const btns = [1,2,3,4,5].map(n =>
+      `<button onclick="setNaviOrder('${esc(c.name)}',${n})" style="width:28px;height:28px;border-radius:50%;border:2px solid ${order===n?'#1a56db':'#d1d5db'};background:${order===n?'#1a56db':'#fff'};color:${order===n?'#fff':'#374151'};font-size:0.78rem;font-weight:700;cursor:pointer;">${n}</button>`
+    ).join('');
+    return `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.85rem;font-weight:600;">${esc(c.name)}</div>
+          <div style="font-size:0.75rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.address)}</div>
+        </div>
+        <div style="display:flex;gap:3px;flex-shrink:0;">${btns}</div>
+      </div>`;
+  }).join('');
+}
+
+function setNaviOrder(name, n) {
+  // 같은 번호 이미 있으면 해제
+  Object.keys(naviOrder).forEach(k => { if (naviOrder[k] === n) delete naviOrder[k]; });
+  // 같은 거래처 다시 누르면 해제
+  if (naviOrder[name] === n) { delete naviOrder[name]; }
+  else { naviOrder[name] = n; }
+  renderNaviClientList();
+}
+
+function startNavi() {
+  const ordered = Object.entries(naviOrder).sort((a,b) => a[1]-b[1]);
+  if (!ordered.length) { toast('방문 순서를 지정하세요.'); return; }
+  const waypoints = ordered.map(([name]) => {
+    const c = state.clients.find(c => c.name === name);
+    return c ? c.address : name;
+  }).filter(Boolean);
+  if (waypoints.length === 1) {
+    window.open(`https://map.naver.com/v5/directions/-/-/-/car?goal=${encodeURIComponent(waypoints[0])}`, '_blank');
+  } else {
+    const goal = encodeURIComponent(waypoints[waypoints.length - 1]);
+    const vias = waypoints.slice(0, -1).map(w => encodeURIComponent(w)).join(',');
+    window.open(`https://map.naver.com/v5/directions/-/-/${vias}/car?goal=${goal}`, '_blank');
+  }
 }
 
 /* ═══════════════════════════════════
@@ -1043,6 +1232,37 @@ function renderDetail() {
 
   document.getElementById('detail-client').textContent = d.client;
   document.getElementById('detail-date').textContent   = d.date;
+  // 거래처 주소 + 메모 표시
+  const clientObj = state.clients.find(c => c.name === d.client);
+  const addrArea = document.getElementById('detail-client-address');
+  const memoArea = document.getElementById('detail-client-memo');
+  if (addrArea) {
+    if (clientObj && clientObj.address) {
+      addrArea.style.display = '';
+      addrArea.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:0.8rem;color:#374151;">📍 ${esc(clientObj.address)}</span>
+          <button onclick="openNaverMap('${esc(clientObj.address)}')" style="font-size:0.72rem;padding:2px 8px;border-radius:10px;border:1px solid #0369a1;background:#e0f2fe;color:#0369a1;white-space:nowrap;cursor:pointer;">지도</button>
+        </div>`;
+    } else {
+      addrArea.style.display = 'none';
+    }
+  }
+  if (memoArea) {
+    if (clientObj && clientObj.memo) {
+      memoArea.style.display = '';
+      memoArea.innerHTML = `
+        <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;padding:7px 10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+            <span style="font-size:0.78rem;font-weight:700;color:#92400e;">🔒 메모</span>
+            <button onclick="revealDetailMemo()" id="memo-reveal-btn" style="font-size:0.72rem;padding:2px 8px;border-radius:10px;border:1px solid #fbbf24;background:#fef3c7;color:#92400e;cursor:pointer;">👁️ 탭해서 확인</button>
+          </div>
+          <div id="detail-memo-text" style="font-size:0.85rem;color:#78350f;filter:blur(5px);transition:filter 0.2s;user-select:none;">${esc(clientObj.memo)}</div>
+        </div>`;
+    } else {
+      memoArea.style.display = 'none';
+    }
+  }
 
   const totalQty    = d.items.reduce((s,i) => s + i.qty, 0);
   const totalLoaded = d.items.reduce((s,i) => s + i.loaded, 0);
@@ -1290,7 +1510,7 @@ function renderHistoryClientFilter() {
   const sel  = document.getElementById('history-client-filter');
   const cur  = sel.value;
   sel.innerHTML = `<option value="">전체</option>` +
-    state.clients.map(c => `<option value="${esc(c)}"${c===cur?' selected':''}>${esc(c)}</option>`).join('');
+    state.clients.map(c => `<option value="${esc(c.name)}"${c.name===cur?' selected':''}>${esc(c.name)}</option>`).join('');
 }
 
 function renderHistory() {
