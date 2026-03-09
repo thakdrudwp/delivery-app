@@ -915,12 +915,40 @@ window.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('popstate', function() {
     fillHistoryStack();
+
     const exitModal = document.getElementById('exit-confirm-modal');
+
+    // 1. 종료 팝업 열려있으면 닫기
     if (exitModal && exitModal.classList.contains('open')) {
       exitModal.classList.remove('open');
-    } else {
-      exitModal.classList.add('open');
+      return;
     }
+
+    // 2. 커스텀 드롭다운 열려있으면 닫기
+    const openDropdown = document.querySelector('.custom-color-select-dropdown.open');
+    if (openDropdown) {
+      _closeAllDropdowns();
+      return;
+    }
+
+    // 3. 다른 모달/팝업 열려있으면 닫기
+    const openModal = document.querySelector('.modal-overlay.open');
+    if (openModal) {
+      openModal.classList.remove('open');
+      localStorage.removeItem('lastModal');
+      localStorage.removeItem('lastModalType');
+      return;
+    }
+
+    // 4. 검수 상세 열려있으면 닫기
+    const detailEl = document.getElementById('check-detail');
+    if (detailEl && detailEl.style.display !== 'none') {
+      closeDetail();
+      return;
+    }
+
+    // 5. 아무것도 없으면 종료 팝업
+    if (exitModal) exitModal.classList.add('open');
   });
 
   // 포커스/화면 돌아올 때마다 스택 보충
