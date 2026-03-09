@@ -936,7 +936,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 더 이상 뒤로갈 곳 없음 → 종료 확인 팝업
     history.pushState({ page: 'app' }, '');
-    showExitConfirm();
+    document.getElementById('exit-confirm-modal').classList.add('open');
   });
 });
 
