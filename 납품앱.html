@@ -901,8 +901,6 @@ window.addEventListener('DOMContentLoaded', () => {
   for (let _i = 0; _i < 50; _i++) history.pushState({ page: 'app' }, '');
 
   window.addEventListener('popstate', function() {
-    // 스택 항상 보충 (앱이 절대 안 꺼지게)
-    history.pushState({ page: 'app' }, '');
 
     // 종료 확인 팝업 열려있으면 닫기
     const exitModal = document.getElementById('exit-confirm-modal');
