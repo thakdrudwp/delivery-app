@@ -852,6 +852,13 @@ window.addEventListener('DOMContentLoaded', () => {
   // 마지막 탭 복원
   const lastTab = localStorage.getItem('lastTab');
   if (lastTab && TAB_ORDER.includes(lastTab)) switchTab(lastTab, true);
+
+  // 검수 상세 복원
+  const lastDetailId = localStorage.getItem('lastDetailId');
+  if (lastDetailId && getDelivery(lastDetailId)) openDetail(lastDetailId);
+
+  // 새로고침 알림
+  setTimeout(() => toast('🔄 새로고침 됨'), 300);
 });
 
 /* ═══════════════════════════════════
@@ -1777,6 +1784,7 @@ function renderDeliveryList() {
 ═══════════════════════════════════ */
 function openDetail(id) {
   state.currentDeliveryId = id;
+  localStorage.setItem('lastDetailId', id);
   document.getElementById('check-list-view').style.display = 'none';
   document.getElementById('check-detail').style.display = 'block';
   renderDetail();
@@ -1784,6 +1792,7 @@ function openDetail(id) {
 
 function closeDetail() {
   state.currentDeliveryId = null;
+  localStorage.removeItem('lastDetailId');
   document.getElementById('check-detail').style.display = 'none';
   document.getElementById('check-list-view').style.display = 'block';
   renderDeliveryList();
