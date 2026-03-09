@@ -477,8 +477,8 @@
       <div>잔여 <span id="ds-remain">0</span></div>
     </div>
     <!-- 기호/색상/텍스트/색상/적용 한 줄 -->
-    <div style="background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;gap:4px;">
-      <select id="bulk-mark-symbol-select" style="flex:1;min-width:0;padding:6px 2px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:1.1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="applyBulkMarkCombined()">
+    <div style="background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;align-items:stretch;gap:4px;">
+      <select id="bulk-mark-symbol-select" style="flex:1;min-width:0;height:36px;box-sizing:border-box;padding:0 2px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:1.1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="applyBulkMarkCombined()">
         <option value="">기호</option>
         <option value="/">/</option>
         <option value="—">—</option>
@@ -492,7 +492,7 @@
         <option value="∧">∧</option>
         <option value="∨">∨</option>
       </select>
-      <select id="bulk-mark-color-select" style="flex:1;min-width:0;padding:6px 2px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.82rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="applyBulkMarkCombined()">
+      <select id="bulk-mark-color-select" style="flex:1;min-width:0;height:36px;box-sizing:border-box;padding:0 2px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.82rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="applyBulkMarkCombined()">
         <option value="검정"   style="color:#111111;font-weight:700;">검정</option>
         <option value="노랑"   style="color:#c8a000;font-weight:700;">노랑</option>
         <option value="빨강보라" style="color:#7b2d8b;font-weight:700;">빨강보라</option>
@@ -506,8 +506,8 @@
         <option value="초록"   style="color:#166534;font-weight:700;">초록</option>
         <option value="적갈색"  style="color:#8b3a1a;font-weight:700;">적갈색</option>
       </select>
-      <input type="text" id="bulk-mark-text" placeholder="한글" style="flex:1.2;min-width:0;padding:6px 4px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.85rem;font-weight:600;" />
-      <select id="bulk-text-color-select" style="flex:1;min-width:0;padding:6px 2px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.82rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="selectTextColor(this.value)">
+      <input type="text" id="bulk-mark-text" placeholder="텍스트" style="flex:1;min-width:0;height:36px;box-sizing:border-box;padding:0 6px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.85rem;font-weight:600;text-align:center;" />
+      <select id="bulk-text-color-select" style="flex:1;min-width:0;height:36px;box-sizing:border-box;padding:0 2px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.82rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="selectTextColor(this.value)">
         <option value="검정"   style="color:#111111;font-weight:700;">검정</option>
         <option value="노랑"   style="color:#c8a000;font-weight:700;">노랑</option>
         <option value="빨강보라" style="color:#7b2d8b;font-weight:700;">빨강보라</option>
@@ -521,7 +521,7 @@
         <option value="초록"   style="color:#166534;font-weight:700;">초록</option>
         <option value="적갈색"  style="color:#8b3a1a;font-weight:700;">적갈색</option>
       </select>
-      <button onclick="applyBulkMarkText(document.getElementById('bulk-mark-text').value)" style="padding:6px 8px;border-radius:7px;border:none;background:#16a34a;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">적용</button>
+      <button onclick="applyBulkMarkText(document.getElementById('bulk-mark-text').value)" style="flex:1;min-width:0;height:36px;box-sizing:border-box;padding:0 4px;border-radius:7px;border:none;background:#16a34a;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">적용</button>
       <select id="bulk-mark-select" style="display:none;"></select>
     </div>
     <div id="detail-item-list"></div>
@@ -1972,9 +1972,9 @@ function applyBulkMarkCombined() {
   const sym = document.getElementById('bulk-mark-symbol-select').value;
   const cn  = document.getElementById('bulk-mark-color-select').value;
   const val = sym ? sym + ':' + cn : '';
-  // 기호색상 select 색 반영
-  const colorSel = document.getElementById('bulk-mark-color-select');
-  colorSel.style.color = markColor(':' + cn);
+  // 커스텀 트리거에 색 반영
+  const trigger = document.getElementById('mark-color-trigger');
+  if (trigger) trigger.innerHTML = `<span style="color:${markColor(':'+cn)};font-weight:700;">${cn}</span>`;
   applyBulkMark(val, {});
 }
 
