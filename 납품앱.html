@@ -476,54 +476,23 @@
       <div>하차 <span id="ds-unloaded">0</span></div>
       <div>잔여 <span id="ds-remain">0</span></div>
     </div>
-    <div style="background:#fff;border-radius:8px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-      <select id="bulk-mark-select" style="flex:1;min-width:0;padding:6px 4px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="applyBulkMark(this.value,this)">
-        <option value="">-- 기호 --</option>
-        <optgroup label="I">
-          <option value="I:검정"   style="color:#111111;font-weight:700;">I  검정</option>
-          <option value="I:노랑"   style="color:#c8a000;font-weight:700;">I  노랑</option>
-          <option value="I:빨강보라" style="color:#7b2d8b;font-weight:700;">I  빨강보라</option>
-          <option value="I:주황"   style="color:#e55300;font-weight:700;">I  주황</option>
-          <option value="I:파랑"   style="color:#1a56db;font-weight:700;">I  파랑</option>
-          <option value="I:순수핑크" style="color:#e0006a;font-weight:700;">I  순수핑크</option>
-          <option value="I:연파랑"  style="color:#007bbd;font-weight:700;">I  연파랑</option>
-          <option value="I:빨강"   style="color:#dc2626;font-weight:700;">I  빨강</option>
-          <option value="I:연두"   style="color:#4a9900;font-weight:700;">I  연두</option>
-          <option value="I:노랑황토" style="color:#b07800;font-weight:700;">I  노랑황토</option>
-          <option value="I:초록"   style="color:#166534;font-weight:700;">I  초록</option>
-          <option value="I:적갈색"  style="color:#8b3a1a;font-weight:700;">I  적갈색</option>
-        </optgroup>
-        <optgroup label="✓">
-          <option value="✓:검정"   style="color:#111111;font-weight:700;">✓  검정</option>
-          <option value="✓:노랑"   style="color:#c8a000;font-weight:700;">✓  노랑</option>
-          <option value="✓:빨강보라" style="color:#7b2d8b;font-weight:700;">✓  빨강보라</option>
-          <option value="✓:주황"   style="color:#e55300;font-weight:700;">✓  주황</option>
-          <option value="✓:파랑"   style="color:#1a56db;font-weight:700;">✓  파랑</option>
-          <option value="✓:순수핑크" style="color:#e0006a;font-weight:700;">✓  순수핑크</option>
-          <option value="✓:연파랑"  style="color:#007bbd;font-weight:700;">✓  연파랑</option>
-          <option value="✓:빨강"   style="color:#dc2626;font-weight:700;">✓  빨강</option>
-          <option value="✓:연두"   style="color:#4a9900;font-weight:700;">✓  연두</option>
-          <option value="✓:노랑황토" style="color:#b07800;font-weight:700;">✓  노랑황토</option>
-          <option value="✓:초록"   style="color:#166534;font-weight:700;">✓  초록</option>
-          <option value="✓:적갈색"  style="color:#8b3a1a;font-weight:700;">✓  적갈색</option>
-        </optgroup>
-        <optgroup label="○">
-          <option value="○:검정"   style="color:#111111;font-weight:700;">○  검정</option>
-          <option value="○:노랑"   style="color:#c8a000;font-weight:700;">○  노랑</option>
-          <option value="○:빨강보라" style="color:#7b2d8b;font-weight:700;">○  빨강보라</option>
-          <option value="○:주황"   style="color:#e55300;font-weight:700;">○  주황</option>
-          <option value="○:파랑"   style="color:#1a56db;font-weight:700;">○  파랑</option>
-          <option value="○:순수핑크" style="color:#e0006a;font-weight:700;">○  순수핑크</option>
-          <option value="○:연파랑"  style="color:#007bbd;font-weight:700;">○  연파랑</option>
-          <option value="○:빨강"   style="color:#dc2626;font-weight:700;">○  빨강</option>
-          <option value="○:연두"   style="color:#4a9900;font-weight:700;">○  연두</option>
-          <option value="○:노랑황토" style="color:#b07800;font-weight:700;">○  노랑황토</option>
-          <option value="○:초록"   style="color:#166534;font-weight:700;">○  초록</option>
-          <option value="○:적갈색"  style="color:#8b3a1a;font-weight:700;">○  적갈색</option>
-        </optgroup>
+    <!-- 기호/색상/텍스트/색상/적용 한 줄 -->
+    <div style="background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;gap:4px;">
+      <select id="bulk-mark-symbol-select" style="flex:1;min-width:0;padding:6px 2px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:1.1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="applyBulkMarkCombined()">
+        <option value="">기호</option>
+        <option value="/">/</option>
+        <option value="—">—</option>
+        <option value="|">|</option>
+        <option value="○">○</option>
+        <option value="✓">✓</option>
+        <option value="<">&lt;</option>
+        <option value=">">&gt;</option>
+        <option value="[">[</option>
+        <option value="]">]</option>
+        <option value="∧">∧</option>
+        <option value="∨">∨</option>
       </select>
-      <input type="text" id="bulk-mark-text" placeholder="한글입력" style="flex:1;min-width:0;padding:6px 6px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.85rem;font-weight:600;" />
-      <select id="bulk-text-color-select" style="flex:1;min-width:0;padding:6px 4px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.95rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="selectTextColor(this.value)">
+      <select id="bulk-mark-color-select" style="flex:1;min-width:0;padding:6px 2px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.82rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="applyBulkMarkCombined()">
         <option value="검정"   style="color:#111111;font-weight:700;">검정</option>
         <option value="노랑"   style="color:#c8a000;font-weight:700;">노랑</option>
         <option value="빨강보라" style="color:#7b2d8b;font-weight:700;">빨강보라</option>
@@ -537,7 +506,23 @@
         <option value="초록"   style="color:#166534;font-weight:700;">초록</option>
         <option value="적갈색"  style="color:#8b3a1a;font-weight:700;">적갈색</option>
       </select>
-      <button onclick="applyBulkMarkText(document.getElementById('bulk-mark-text').value)" style="flex:1;min-width:0;padding:6px 4px;border-radius:7px;border:none;background:#16a34a;color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;">적용</button>
+      <input type="text" id="bulk-mark-text" placeholder="한글" style="flex:1.2;min-width:0;padding:6px 4px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.85rem;font-weight:600;" />
+      <select id="bulk-text-color-select" style="flex:1;min-width:0;padding:6px 2px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.82rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="selectTextColor(this.value)">
+        <option value="검정"   style="color:#111111;font-weight:700;">검정</option>
+        <option value="노랑"   style="color:#c8a000;font-weight:700;">노랑</option>
+        <option value="빨강보라" style="color:#7b2d8b;font-weight:700;">빨강보라</option>
+        <option value="주황"   style="color:#e55300;font-weight:700;">주황</option>
+        <option value="파랑"   style="color:#1a56db;font-weight:700;">파랑</option>
+        <option value="순수핑크" style="color:#e0006a;font-weight:700;">순수핑크</option>
+        <option value="연파랑"  style="color:#007bbd;font-weight:700;">연파랑</option>
+        <option value="빨강"   style="color:#dc2626;font-weight:700;">빨강</option>
+        <option value="연두"   style="color:#4a9900;font-weight:700;">연두</option>
+        <option value="노랑황토" style="color:#b07800;font-weight:700;">노랑황토</option>
+        <option value="초록"   style="color:#166534;font-weight:700;">초록</option>
+        <option value="적갈색"  style="color:#8b3a1a;font-weight:700;">적갈색</option>
+      </select>
+      <button onclick="applyBulkMarkText(document.getElementById('bulk-mark-text').value)" style="padding:6px 8px;border-radius:7px;border:none;background:#16a34a;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">적용</button>
+      <select id="bulk-mark-select" style="display:none;"></select>
     </div>
     <div id="detail-item-list"></div>
     <div style="background:#fff;border-radius:8px;padding:8px 12px;margin-top:6px;">
@@ -868,11 +853,20 @@ window.addEventListener('DOMContentLoaded', () => {
 /* ═══════════════════════════════════
    TAB
 ═══════════════════════════════════ */
-function switchTab(id) {
+const TAB_ORDER = ['tab-input','tab-check','tab-history','tab-settings'];
+let _currentTabIdx = 0;
+
+function switchTab(id, fromSwipe) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  const idx = TAB_ORDER.indexOf(id);
+  if (idx !== -1) {
+    _currentTabIdx = idx;
+    document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  } else if (!fromSwipe && event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+  }
   if (id === 'tab-check') { closeDetail(); renderDeliveryList(); renderNaviClientList(); }
   if (id === 'tab-history') { renderHistory(); renderStats(); }
   if (id === 'tab-settings') { renderClientList(); renderHistoryClientFilter(); }
@@ -1856,11 +1850,21 @@ function renderDetail() {
   // bulk 기호 선택기 현재 상태 복원
   const bulkSel = document.getElementById('bulk-mark-select');
   const bulkTxt = document.getElementById('bulk-mark-text');
-  if (bulkSel && d.items.length > 0) {
+  const symSel   = document.getElementById('bulk-mark-symbol-select');
+  const colorSel2 = document.getElementById('bulk-mark-color-select');
+  if (symSel && d.items.length > 0) {
     const firstMark = d.items[0].mark || '';
     const allSame = d.items.every(it => it.mark === firstMark);
-    bulkSel.value = allSame ? firstMark : '';
-    bulkSel.style.color = bulkSel.value ? markColor(firstMark) : '#555';
+    const markVal = allSame ? firstMark : '';
+    if (markVal) {
+      const [sym, cn] = markVal.split(':');
+      symSel.value = sym || '';
+      if (colorSel2) { colorSel2.value = cn || '검정'; colorSel2.style.color = markColor(':' + (cn||'검정')); }
+    } else {
+      symSel.value = '';
+      if (colorSel2) { colorSel2.value = '검정'; colorSel2.style.color = markColor(':검정'); }
+    }
+    if (bulkSel) bulkSel.value = markVal;
   }
   if (bulkTxt && d.items.length > 0) {
     const firstTxt = d.items[0].markText || '';
@@ -1869,6 +1873,17 @@ function renderDetail() {
     const firstTxtColor = d.items[0].markTextColor || '검정';
     _textColor = firstTxtColor;
     selectTextColor(firstTxtColor);
+    // 커스텀 트리거 동기화
+    const txtTrigger = document.getElementById('text-color-trigger');
+    if (txtTrigger) {
+      const col = markColor(':' + firstTxtColor);
+      txtTrigger.innerHTML = `<span style="color:${col};font-weight:700;">${firstTxtColor}</span>`;
+    }
+    const markColorTrigger = document.getElementById('mark-color-trigger');
+    if (markColorTrigger && colorSel2) {
+      const col2 = markColor(':' + (colorSel2.value || '검정'));
+      markColorTrigger.innerHTML = `<span style="color:${col2};font-weight:700;">${colorSel2.value || '검정'}</span>`;
+    }
   }
 
   // 메모 복원
@@ -1949,8 +1964,18 @@ function applyBulkMark(val, sel) {
   if (!d) return;
   d.items.forEach(it => { it.mark = val; });
   saveState();
-  sel.style.color = val ? markColor(val) : '#555';
+  if (sel && sel.style) sel.style.color = val ? markColor(val) : '#555';
   renderDetail();
+}
+
+function applyBulkMarkCombined() {
+  const sym = document.getElementById('bulk-mark-symbol-select').value;
+  const cn  = document.getElementById('bulk-mark-color-select').value;
+  const val = sym ? sym + ':' + cn : '';
+  // 기호색상 select 색 반영
+  const colorSel = document.getElementById('bulk-mark-color-select');
+  colorSel.style.color = markColor(':' + cn);
+  applyBulkMark(val, {});
 }
 
 let _textColor = '검정';
@@ -2551,6 +2576,162 @@ async function gdriveRestore() {
     gdriveSetStatus('❌ 복원 실패: ' + e.message, '#dc2626');
   }
 }
+</script>
+
+<!-- ===== 스와이프 탭 전환 ===== -->
+<script>
+(function() {
+  let tx = 0, ty = 0;
+  const THRESHOLD = 50, RATIO = 1.2;
+  document.addEventListener('touchstart', function(e) {
+    tx = e.touches[0].clientX;
+    ty = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    const dx = e.changedTouches[0].clientX - tx;
+    const dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) < THRESHOLD || Math.abs(dx) < Math.abs(dy) * RATIO) return;
+    // 모달/드롭다운 열려있으면 스와이프 무시
+    if (document.querySelector('.modal-overlay.open')) return;
+    if (dx < 0 && _currentTabIdx < TAB_ORDER.length - 1) {
+      switchTab(TAB_ORDER[_currentTabIdx + 1], true);
+    } else if (dx > 0 && _currentTabIdx > 0) {
+      switchTab(TAB_ORDER[_currentTabIdx - 1], true);
+    }
+  }, { passive: true });
+})();
+</script>
+
+<!-- ===== 커스텀 색상 드롭다운 (모바일용) ===== -->
+<style>
+.custom-color-select { position:relative; display:inline-block; width:100%; }
+.custom-color-select-trigger {
+  display:flex; align-items:center; justify-content:center;
+  padding:6px 4px; border-radius:7px; border:1.5px solid #d1d5db;
+  background:#f9fafb; font-size:0.95rem; font-weight:700; cursor:pointer;
+  min-width:0; gap:4px; user-select:none;
+}
+.custom-color-select-dropdown {
+  display:none; position:fixed; z-index:9999;
+  background:#fff; border:1.5px solid #d1d5db; border-radius:10px;
+  box-shadow:0 4px 24px rgba(0,0,0,0.18); min-width:160px;
+  max-height:55vh; overflow-y:auto; padding:4px 0;
+}
+.custom-color-select-dropdown.open { display:block; }
+.custom-color-select-group-label {
+  font-size:0.72rem; color:#9ca3af; font-weight:700;
+  padding:6px 14px 2px; letter-spacing:1px;
+}
+.custom-color-select-option {
+  padding:8px 16px; font-size:0.95rem; font-weight:700; cursor:pointer;
+}
+.custom-color-select-option:active { background:#f3f4f6; }
+</style>
+<script>
+const _COLOR_LIST = [
+  { value:'검정',   color:'#111111' },
+  { value:'노랑',   color:'#c8a000' },
+  { value:'빨강보라', color:'#7b2d8b' },
+  { value:'주황',   color:'#e55300' },
+  { value:'파랑',   color:'#1a56db' },
+  { value:'순수핑크', color:'#e0006a' },
+  { value:'연파랑',  color:'#007bbd' },
+  { value:'빨강',   color:'#dc2626' },
+  { value:'연두',   color:'#4a9900' },
+  { value:'노랑황토', color:'#b07800' },
+  { value:'초록',   color:'#166534' },
+  { value:'적갈색',  color:'#8b3a1a' },
+];
+const _SYM_LIST = ['I','✓','○'];
+
+let _openDropdown = null;
+
+function _closeAllDropdowns() {
+  document.querySelectorAll('.custom-color-select-dropdown.open').forEach(d => d.classList.remove('open'));
+  _openDropdown = null;
+}
+
+document.addEventListener('touchstart', function(e) {
+  if (_openDropdown && !_openDropdown.contains(e.target) && !e.target.closest('.custom-color-select-trigger')) {
+    _closeAllDropdowns();
+  }
+}, { passive: true });
+
+function _positionDropdown(trigger, dropdown) {
+  const r = trigger.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - r.bottom;
+  const spaceAbove = r.top;
+  dropdown.style.left = Math.max(4, r.left) + 'px';
+  dropdown.style.width = Math.max(160, r.width) + 'px';
+  if (spaceBelow >= 200 || spaceBelow >= spaceAbove) {
+    dropdown.style.top = (r.bottom + 4) + 'px';
+    dropdown.style.bottom = '';
+  } else {
+    dropdown.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+    dropdown.style.top = '';
+  }
+}
+
+// 색상 커스텀 드롭다운 공통 생성
+function _makeColorSelectCustom(origId, triggerId, dropdownId, onSelect) {
+  const orig = document.getElementById(origId);
+  if (!orig || orig.dataset.customized) return;
+  orig.dataset.customized = '1';
+  orig.style.display = 'none';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'custom-color-select';
+  wrapper.style.cssText = 'flex:1;min-width:0;';
+
+  const trigger = document.createElement('div');
+  trigger.className = 'custom-color-select-trigger';
+  trigger.id = triggerId;
+  const initColor = _COLOR_LIST[0];
+  trigger.innerHTML = `<span style="color:${initColor.color};font-weight:700;">${initColor.value}</span>`;
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'custom-color-select-dropdown';
+  dropdown.id = dropdownId;
+
+  _COLOR_LIST.forEach(({ value, color }) => {
+    const opt = document.createElement('div');
+    opt.className = 'custom-color-select-option';
+    opt.style.color = color;
+    opt.textContent = value;
+    opt.addEventListener('click', function() {
+      orig.value = value;
+      trigger.innerHTML = `<span style="color:${color};font-weight:700;">${value}</span>`;
+      onSelect(value, color);
+      _closeAllDropdowns();
+    });
+    dropdown.appendChild(opt);
+  });
+
+  trigger.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (dropdown.classList.contains('open')) { _closeAllDropdowns(); return; }
+    _closeAllDropdowns();
+    _positionDropdown(trigger, dropdown);
+    dropdown.classList.add('open');
+    _openDropdown = dropdown;
+  });
+
+  document.body.appendChild(dropdown);
+  orig.parentNode.insertBefore(wrapper, orig);
+  wrapper.appendChild(trigger);
+  wrapper.appendChild(orig);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 기호 색상 드롭다운
+  _makeColorSelectCustom('bulk-mark-color-select', 'mark-color-trigger', 'mark-color-dropdown', function(value) {
+    applyBulkMarkCombined();
+  });
+  // 텍스트 색상 드롭다운
+  _makeColorSelectCustom('bulk-text-color-select', 'text-color-trigger', 'text-color-dropdown', function(value) {
+    selectTextColor(value);
+  });
+});
 </script>
 </body>
 </html>
