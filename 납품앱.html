@@ -868,15 +868,62 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 모달 복원
+  // 모달 복원 (설정 탭에 있을 때만)
   const lastModal = localStorage.getItem('lastModal');
   const lastModalType = localStorage.getItem('lastModalType');
-  if (lastModal === 'client-list-modal' && lastModalType) {
+  const restoredTab = localStorage.getItem('lastTab') || 'tab-input';
+  if (lastModal === 'client-list-modal' && lastModalType && restoredTab === 'tab-settings') {
     openClientListModal(lastModalType);
+  } else {
+    localStorage.removeItem('lastModal');
+    localStorage.removeItem('lastModalType');
   }
 
   // 새로고침 알림
   setTimeout(() => toast('🔄 새로고침 됨'), 300);
+
+  // 뒤로가기 처리 초기화
+  let _backPressedOnce = false;
+  let _backTimer = null;
+  history.replaceState({ page: 'app' }, '');
+  history.pushState({ page: 'app' }, '');
+
+  window.addEventListener('popstate', function() {
+    history.pushState({ page: 'app' }, '');
+
+    // 모달 열려있으면 닫기
+    const openModal = document.querySelector('.modal-overlay.open');
+    if (openModal) {
+      openModal.classList.remove('open');
+      localStorage.removeItem('lastModal');
+      localStorage.removeItem('lastModalType');
+      return;
+    }
+
+    // 검수 상세 → 목록으로
+    const detailEl = document.getElementById('check-detail');
+    if (detailEl && detailEl.style.display !== 'none') {
+      closeDetail();
+      return;
+    }
+
+    // 탭 이동 (입력이 아니면 이전 탭으로)
+    if (_currentTabIdx > 0) {
+      switchTab(TAB_ORDER[_currentTabIdx - 1], true);
+      return;
+    }
+
+    // 더 이상 뒤로갈 곳 없음 → 2초 안에 2번 누르면 종료
+    if (_backPressedOnce) {
+      clearTimeout(_backTimer);
+      _backPressedOnce = false;
+      window.close();
+      return;
+    }
+    _backPressedOnce = true;
+    toast('한 번 더 누르면 종료됩니다');
+    _backTimer = setTimeout(() => { _backPressedOnce = false; }, 2000);
+  });
 });
 
 /* ═══════════════════════════════════
@@ -2612,56 +2659,6 @@ async function gdriveRestore() {
     gdriveSetStatus('❌ 복원 실패: ' + e.message, '#dc2626');
   }
 }
-</script>
-
-<!-- ===== 뒤로가기 처리 ===== -->
-<script>
-(function() {
-  let _backPressedOnce = false;
-  let _backTimer = null;
-
-  // 히스토리 스택에 2개 쌓아둠 (popstate가 항상 발생하도록)
-  history.replaceState({ page: 'app' }, '');
-  history.pushState({ page: 'app' }, '');
-
-  window.addEventListener('popstate', function(e) {
-    // 항상 스택 유지
-    history.pushState({ page: 'app' }, '');
-
-    // 모달 열려있으면 닫기
-    const openModal = document.querySelector('.modal-overlay.open');
-    if (openModal) {
-      openModal.classList.remove('open');
-      localStorage.removeItem('lastModal');
-      localStorage.removeItem('lastModalType');
-      return;
-    }
-
-    // 검수 상세 → 목록으로
-    const detailEl = document.getElementById('check-detail');
-    if (detailEl && detailEl.style.display !== 'none') {
-      closeDetail();
-      return;
-    }
-
-    // 탭 이동 (입력이 아니면 이전 탭으로)
-    if (_currentTabIdx > 0) {
-      switchTab(TAB_ORDER[_currentTabIdx - 1], true);
-      return;
-    }
-
-    // 더 이상 뒤로갈 곳 없음 → 2초 안에 2번 누르면 종료
-    if (_backPressedOnce) {
-      clearTimeout(_backTimer);
-      _backPressedOnce = false;
-      window.close();
-      return;
-    }
-    _backPressedOnce = true;
-    toast('한 번 더 누르면 종료됩니다');
-    _backTimer = setTimeout(() => { _backPressedOnce = false; }, 2000);
-  });
-})();
 </script>
 
 <!-- ===== 스와이프 탭 전환 ===== -->
