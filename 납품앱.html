@@ -868,6 +868,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // 모달 복원
+  const lastModal = localStorage.getItem('lastModal');
+  const lastModalType = localStorage.getItem('lastModalType');
+  if (lastModal === 'client-list-modal' && lastModalType) {
+    openClientListModal(lastModalType);
+  }
+
   // 새로고침 알림
   setTimeout(() => toast('🔄 새로고침 됨'), 300);
 });
@@ -1449,6 +1456,8 @@ function openClientListModal(type) {
   document.getElementById('client-list-modal-title').textContent = type === 'long' ? '🛣️ 장거리 거래처' : '🏙️ 단거리 거래처';
   renderClientListModal();
   document.getElementById('client-list-modal').classList.add('open');
+  localStorage.setItem('lastModal', 'client-list-modal');
+  localStorage.setItem('lastModalType', type);
 }
 
 function renderClientListModal() {
@@ -2179,6 +2188,8 @@ async function checkDevPin() {
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
+  localStorage.removeItem('lastModal');
+  localStorage.removeItem('lastModalType');
 }
 
 /* ═══════════════════════════════════
@@ -2641,9 +2652,7 @@ async function gdriveRestore() {
     if (_backPressedOnce) {
       clearTimeout(_backTimer);
       _backPressedOnce = false;
-      window.close(); // 앱 종료 시도
-      // window.close()가 안 되는 브라우저 대비
-      history.go(-(history.length));
+      window.close();
       return;
     }
     _backPressedOnce = true;
