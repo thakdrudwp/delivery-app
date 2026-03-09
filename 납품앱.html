@@ -917,7 +917,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (_backPressedOnce) {
       clearTimeout(_backTimer);
       _backPressedOnce = false;
-      window.close();
+      // 브라우저 기본 동작으로 종료 (히스토리 스택 소진)
+      history.go(-2);
       return;
     }
     _backPressedOnce = true;
