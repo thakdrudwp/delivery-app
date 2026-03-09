@@ -479,21 +479,63 @@
     <div style="background:#fff;border-radius:8px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
       <select id="bulk-mark-select" style="flex:1;min-width:0;padding:6px 4px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="applyBulkMark(this.value,this)">
         <option value="">-- 기호 --</option>
-        <option value="I:black"  style="color:#111;font-weight:700;">I  검정</option>
-        <option value="I:red"    style="color:#dc2626;font-weight:700;">I  빨강</option>
-        <option value="I:blue"   style="color:#1a56db;font-weight:700;">I  파랑</option>
-        <option value="✓:black" style="color:#111;font-weight:700;">✓  검정</option>
-        <option value="✓:red"   style="color:#dc2626;font-weight:700;">✓  빨강</option>
-        <option value="✓:blue"  style="color:#1a56db;font-weight:700;">✓  파랑</option>
-        <option value="○:black" style="color:#111;font-weight:700;">○  검정</option>
-        <option value="○:red"   style="color:#dc2626;font-weight:700;">○  빨강</option>
-        <option value="○:blue"  style="color:#1a56db;font-weight:700;">○  파랑</option>
+        <optgroup label="I">
+          <option value="I:검정">I  검정</option>
+          <option value="I:노랑">I  노랑</option>
+          <option value="I:빨강보라">I  빨강보라</option>
+          <option value="I:주황">I  주황</option>
+          <option value="I:파랑">I  파랑</option>
+          <option value="I:순수핑크">I  순수핑크</option>
+          <option value="I:연파랑">I  연파랑</option>
+          <option value="I:빨강">I  빨강</option>
+          <option value="I:연두">I  연두</option>
+          <option value="I:노랑황토">I  노랑황토</option>
+          <option value="I:초록">I  초록</option>
+          <option value="I:적갈색">I  적갈색</option>
+        </optgroup>
+        <optgroup label="✓">
+          <option value="✓:검정">✓  검정</option>
+          <option value="✓:노랑">✓  노랑</option>
+          <option value="✓:빨강보라">✓  빨강보라</option>
+          <option value="✓:주황">✓  주황</option>
+          <option value="✓:파랑">✓  파랑</option>
+          <option value="✓:순수핑크">✓  순수핑크</option>
+          <option value="✓:연파랑">✓  연파랑</option>
+          <option value="✓:빨강">✓  빨강</option>
+          <option value="✓:연두">✓  연두</option>
+          <option value="✓:노랑황토">✓  노랑황토</option>
+          <option value="✓:초록">✓  초록</option>
+          <option value="✓:적갈색">✓  적갈색</option>
+        </optgroup>
+        <optgroup label="○">
+          <option value="○:검정">○  검정</option>
+          <option value="○:노랑">○  노랑</option>
+          <option value="○:빨강보라">○  빨강보라</option>
+          <option value="○:주황">○  주황</option>
+          <option value="○:파랑">○  파랑</option>
+          <option value="○:순수핑크">○  순수핑크</option>
+          <option value="○:연파랑">○  연파랑</option>
+          <option value="○:빨강">○  빨강</option>
+          <option value="○:연두">○  연두</option>
+          <option value="○:노랑황토">○  노랑황토</option>
+          <option value="○:초록">○  초록</option>
+          <option value="○:적갈색">○  적갈색</option>
+        </optgroup>
       </select>
       <input type="text" id="bulk-mark-text" placeholder="한글입력" style="flex:1;min-width:0;padding:6px 6px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.85rem;font-weight:600;" />
       <select id="bulk-text-color-select" style="flex:1;min-width:0;padding:6px 4px;border-radius:7px;border:1.5px solid #d1d5db;background:#f9fafb;font-size:0.95rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;" onchange="selectTextColor(this.value)">
-        <option value="black" style="color:#111;font-weight:700;">검정</option>
-        <option value="red"   style="color:#dc2626;font-weight:700;">빨강</option>
-        <option value="blue"  style="color:#1a56db;font-weight:700;">파랑</option>
+        <option value="검정">검정</option>
+        <option value="노랑">노랑</option>
+        <option value="빨강보라">빨강보라</option>
+        <option value="주황">주황</option>
+        <option value="파랑">파랑</option>
+        <option value="순수핑크">순수핑크</option>
+        <option value="연파랑">연파랑</option>
+        <option value="빨강">빨강</option>
+        <option value="연두">연두</option>
+        <option value="노랑황토">노랑황토</option>
+        <option value="초록">초록</option>
+        <option value="적갈색">적갈색</option>
       </select>
       <button onclick="applyBulkMarkText(document.getElementById('bulk-mark-text').value)" style="flex:1;min-width:0;padding:6px 4px;border-radius:7px;border:none;background:#16a34a;color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;">적용</button>
     </div>
@@ -1818,16 +1860,13 @@ function renderDetail() {
     const firstMark = d.items[0].mark || '';
     const allSame = d.items.every(it => it.mark === firstMark);
     bulkSel.value = allSame ? firstMark : '';
-    if (bulkSel.value) {
-      const mc = firstMark.split(':')[1];
-      bulkSel.style.color = mc==='red'?'#dc2626': mc==='blue'?'#1a56db':'#111';
-    } else { bulkSel.style.color = '#555'; }
+    bulkSel.style.color = bulkSel.value ? markColor(firstMark) : '#555';
   }
   if (bulkTxt && d.items.length > 0) {
     const firstTxt = d.items[0].markText || '';
     const allSameTxt = d.items.every(it => (it.markText||'') === firstTxt);
     bulkTxt.value = allSameTxt ? firstTxt : '';
-    const firstTxtColor = d.items[0].markTextColor || 'black';
+    const firstTxtColor = d.items[0].markTextColor || '검정';
     _textColor = firstTxtColor;
     selectTextColor(firstTxtColor);
   }
@@ -1846,17 +1885,10 @@ function renderDetail() {
       return a.item.name.localeCompare(b.item.name, 'ko');
     });
 
+  const COLOR_NAMES = ['검정','노랑','빨강보라','주황','파랑','순수핑크','연파랑','빨강','연두','노랑황토','초록','적갈색'];
   const MARK_OPTIONS = [
-    { key:'',          label:'-- 기호 선택 --',    color:'' },
-    { key:'I:black',   label:'I  검정',            color:'#111' },
-    { key:'I:red',     label:'I  빨강',            color:'#dc2626' },
-    { key:'I:blue',    label:'I  파랑',            color:'#1a56db' },
-    { key:'✓:black',  label:'✓  검정',     color:'#111' },
-    { key:'✓:red',    label:'✓  빨강',     color:'#dc2626' },
-    { key:'✓:blue',   label:'✓  파랑',     color:'#1a56db' },
-    { key:'○:black',  label:'○  검정', color:'#111' },
-    { key:'○:red',    label:'○  빨강', color:'#dc2626' },
-    { key:'○:blue',   label:'○  파랑', color:'#1a56db' },
+    { key:'', label:'-- 기호 선택 --', color:'' },
+    ...['I','✓','○'].flatMap(sym => COLOR_NAMES.map(cn => ({ key:`${sym}:${cn}`, label:`${sym}  ${cn}`, color:markColor(`${sym}:${cn}`) })))
   ];
 
   document.getElementById('detail-item-list').innerHTML = sorted.map(({ item, i }) => {
@@ -1869,16 +1901,14 @@ function renderDetail() {
     const opts = MARK_OPTIONS.map(o =>
       `<option value="${o.key}"${curMark===o.key?' selected':''}>${o.label}</option>`
     ).join('');
-    let markColor = '#111';
     let markSymbol = '';
+    let markColorVal = '#111';
     if (curMark) {
-      const [ms, mc] = curMark.split(':');
-      markColor = mc==='red'?'#dc2626': mc==='blue'?'#1a56db':'#111';
-      markSymbol = ms;
+      markSymbol = curMark.split(':')[0];
+      markColorVal = markColor(curMark);
     }
     const markTextVal = item.markText || '';
-    const txtC = item.markTextColor || 'black';
-    const txtColor = txtC==='red'?'#dc2626': txtC==='blue'?'#1a56db':'#111';
+    const txtColor = markColor(':' + (item.markTextColor || '검정'));
     const markDisplay = markSymbol
       ? (markTextVal ? `${markSymbol} <span style="color:${txtColor};">${esc(markTextVal)}</span>` : markSymbol)
       : (markTextVal ? `<span style="color:${txtColor};">${esc(markTextVal)}</span>` : '');
@@ -1886,7 +1916,7 @@ function renderDetail() {
       <div class="check-item-card${loadDone?' loaded-done':''}">
         <div class="check-item-top">
           <div class="check-item-name" onclick="openItemEdit('${id}',${i})">${esc(item.name)}</div>
-          <div class="check-item-mark-center" style="color:${markColor};">${markDisplay}</div>
+          <div class="check-item-mark-center" style="color:${markColorVal};">${markDisplay}</div>
           <div class="qty-label-big">${item.qty}<span style="font-size:0.65rem;">${esc(item.unit)}</span></div>
         </div>
         <div class="check-item-row" style="margin-top:6px;">
@@ -1919,21 +1949,18 @@ function applyBulkMark(val, sel) {
   if (!d) return;
   d.items.forEach(it => { it.mark = val; });
   saveState();
-  if (val) {
-    const mc = val.split(':')[1];
-    sel.style.color = mc==='red'?'#dc2626': mc==='blue'?'#1a56db':'#111';
-  } else { sel.style.color = '#555'; }
+  sel.style.color = val ? markColor(val) : '#555';
   renderDetail();
 }
 
-let _textColor = 'black';
+let _textColor = '검정';
 
 function selectTextColor(color) {
   _textColor = color;
   const sel = document.getElementById('bulk-text-color-select');
   if (sel) {
     sel.value = color;
-    sel.style.color = color==='red'?'#dc2626': color==='blue'?'#1a56db':'#111';
+    sel.style.color = markColor(':' + color);
   }
 }
 
@@ -1946,11 +1973,29 @@ function applyBulkMarkText(text) {
   renderDetail();
 }
 
+const MARK_COLOR_MAP = {
+  '검정':   '#111111',
+  '노랑':   '#c8a000',
+  '빨강보라':'#7b2d8b',
+  '주황':   '#e55300',
+  '파랑':   '#1a56db',
+  '순수핑크':'#e0006a',
+  '연파랑':  '#007bbd',
+  '빨강':   '#dc2626',
+  '연두':   '#4a9900',
+  '노랑황토':'#b07800',
+  '초록':   '#166534',
+  '적갈색':  '#8b3a1a',
+};
+function markColor(val) {
+  if (!val) return '#111';
+  const cn = val.split(':')[1];
+  return MARK_COLOR_MAP[cn] || '#111';
+}
+
 function updateMarkSelectColor(sel) {
   const val = sel.value;
-  if (!val) { sel.style.color = '#555'; return; }
-  const mc = val.split(':')[1];
-  sel.style.color = mc==='red'?'#dc2626': mc==='blue'?'#1a56db':'#111';
+  sel.style.color = val ? markColor(val) : '#555';
 }
 
 function setMark(id, idx, sym) {
