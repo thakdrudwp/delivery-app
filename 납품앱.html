@@ -896,11 +896,13 @@ window.addEventListener('DOMContentLoaded', () => {
   // 새로고침 알림
   setTimeout(() => toast('🔄 새로고침 됨'), 300);
 
-  // 뒤로가기 처리 초기화 - 스택을 충분히 쌓아서 앱이 절대 안 꺼지게
+  // 뒤로가기 처리 - 히스토리 2개 유지
   history.replaceState({ page: 'app' }, '');
-  for (let _i = 0; _i < 50; _i++) history.pushState({ page: 'app' }, '');
+  history.pushState({ page: 'app' }, '');
 
   window.addEventListener('popstate', function() {
+    // 즉시 스택 복구
+    setTimeout(() => history.pushState({ page: 'app' }, ''), 0);
 
     // 종료 확인 팝업 열려있으면 닫기
     const exitModal = document.getElementById('exit-confirm-modal');
