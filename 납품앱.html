@@ -855,7 +855,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // 검수 상세 복원
   const lastDetailId = localStorage.getItem('lastDetailId');
-  if (lastDetailId && getDelivery(lastDetailId)) openDetail(lastDetailId);
+  if (lastDetailId) {
+    const found = state.deliveries.find(d => d.id === lastDetailId);
+    if (found) openDetail(lastDetailId);
+    else localStorage.removeItem('lastDetailId');
+  }
 
   // 새로고침 알림
   setTimeout(() => toast('🔄 새로고침 됨'), 300);
