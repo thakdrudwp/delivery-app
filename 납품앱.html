@@ -2637,14 +2637,17 @@ async function gdriveRestore() {
     }
 
     // 더 이상 뒤로갈 곳 없음 → 빠르게 2번이면 종료
+    history.pushState({ page: 'app' }, '');
     if (_backPressedOnce) {
       clearTimeout(_backTimer);
-      history.back(); // 실제 종료
+      _backPressedOnce = false;
+      window.close(); // 앱 종료 시도
+      // window.close()가 안 되는 브라우저 대비
+      history.go(-(history.length));
       return;
     }
     _backPressedOnce = true;
     toast('한 번 더 누르면 종료됩니다');
-    history.pushState({ page: 'app' }, '');
     _backTimer = setTimeout(() => { _backPressedOnce = false; }, 2000);
   });
 })();
