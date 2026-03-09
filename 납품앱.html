@@ -571,9 +571,6 @@
 <!-- ===== TAB 4: 설정 ===== -->
 <div id="tab-settings" class="section">
 
-  <!-- 임시 테스트 -->
-  <button onclick="document.getElementById('exit-confirm-modal').classList.add('open')" style="width:100%;padding:10px;margin-bottom:8px;background:red;color:#fff;border:none;border-radius:8px;font-size:1rem;">종료팝업 테스트</button>
-
   <!-- API 키 -->
   <div class="card" id="api-key-wrap">
     <details id="api-key-details" open>
@@ -912,41 +909,8 @@ window.addEventListener('DOMContentLoaded', () => {
   history.pushState({ page: 'app' }, '');
 
   window.addEventListener('popstate', function() {
-    // 스택 즉시 보충
+    // 뒤로가기 눌러도 앱 종료되지 않게 스택 즉시 보충
     history.pushState({ page: 'app' }, '');
-    history.pushState({ page: 'app' }, '');
-
-    // 종료 확인 팝업 열려있으면 닫기
-    const exitModal = document.getElementById('exit-confirm-modal');
-    if (exitModal && exitModal.classList.contains('open')) {
-      exitModal.classList.remove('open');
-      return;
-    }
-
-    // 다른 모달 열려있으면 닫기
-    const openModal = document.querySelector('.modal-overlay.open');
-    if (openModal) {
-      openModal.classList.remove('open');
-      localStorage.removeItem('lastModal');
-      localStorage.removeItem('lastModalType');
-      return;
-    }
-
-    // 검수 상세 → 목록으로
-    const detailEl = document.getElementById('check-detail');
-    if (detailEl && detailEl.style.display !== 'none') {
-      closeDetail();
-      return;
-    }
-
-    // 탭 이동 (입력이 아니면 이전 탭으로)
-    if (_currentTabIdx > 0) {
-      switchTab(TAB_ORDER[_currentTabIdx - 1], true);
-      return;
-    }
-
-    // 더 이상 뒤로갈 곳 없음 → 종료 확인 팝업
-    document.getElementById('exit-confirm-modal').classList.add('open');
   });
 });
 
