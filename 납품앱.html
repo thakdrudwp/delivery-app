@@ -904,13 +904,17 @@ window.addEventListener('DOMContentLoaded', () => {
   // 새로고침 알림
   setTimeout(() => toast('🔄 새로고침 됨'), 300);
 
-  // 뒤로가기 처리 - 히스토리 2개 유지
+  // 뒤로가기 처리 - 히스토리 스택 충분히 쌓기
   history.replaceState({ page: 'app' }, '');
-  history.pushState({ page: 'app' }, '');
+  for (let i = 0; i < 10; i++) {
+    history.pushState({ page: 'app' }, '');
+  }
 
   window.addEventListener('popstate', function() {
     // 뒤로가기 눌러도 앱 종료되지 않게 스택 즉시 보충
-    history.pushState({ page: 'app' }, '');
+    for (let i = 0; i < 10; i++) {
+      history.pushState({ page: 'app' }, '');
+    }
   });
 });
 
