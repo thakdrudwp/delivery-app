@@ -900,12 +900,12 @@ window.addEventListener('DOMContentLoaded', () => {
   history.pushState({ page: 'app' }, '');
 
   window.addEventListener('popstate', function() {
-    history.pushState({ page: 'app' }, '');
 
     // 종료 확인 팝업 열려있으면 닫기 (취소와 동일)
     const exitModal = document.getElementById('exit-confirm-modal');
     if (exitModal && exitModal.classList.contains('open')) {
       exitModal.classList.remove('open');
+      history.pushState({ page: 'app' }, '');
       return;
     }
 
@@ -915,6 +915,7 @@ window.addEventListener('DOMContentLoaded', () => {
       openModal.classList.remove('open');
       localStorage.removeItem('lastModal');
       localStorage.removeItem('lastModalType');
+      history.pushState({ page: 'app' }, '');
       return;
     }
 
@@ -922,16 +923,19 @@ window.addEventListener('DOMContentLoaded', () => {
     const detailEl = document.getElementById('check-detail');
     if (detailEl && detailEl.style.display !== 'none') {
       closeDetail();
+      history.pushState({ page: 'app' }, '');
       return;
     }
 
     // 탭 이동 (입력이 아니면 이전 탭으로)
     if (_currentTabIdx > 0) {
       switchTab(TAB_ORDER[_currentTabIdx - 1], true);
+      history.pushState({ page: 'app' }, '');
       return;
     }
 
     // 더 이상 뒤로갈 곳 없음 → 종료 확인 팝업
+    history.pushState({ page: 'app' }, '');
     showExitConfirm();
   });
 });
