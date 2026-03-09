@@ -914,9 +914,8 @@ window.addEventListener('DOMContentLoaded', () => {
   fillHistoryStack();
 
   window.addEventListener('popstate', function() {
-    toast('popstate 감지됨');
-    // 스택 보충은 나중에 (팝업 먼저 처리)
-    setTimeout(fillHistoryStack, 100);
+    // 즉시 앞으로 되돌려서 스택이 소진되지 않게
+    history.go(1);
 
     const exitModal = document.getElementById('exit-confirm-modal');
 
