@@ -2620,15 +2620,20 @@ async function gdriveRestore() {
   let _backPressedOnce = false;
   let _backTimer = null;
 
-  // 히스토리 스택 초기화
+  // 히스토리 스택에 2개 쌓아둠 (popstate가 항상 발생하도록)
+  history.replaceState({ page: 'app' }, '');
   history.pushState({ page: 'app' }, '');
 
   window.addEventListener('popstate', function(e) {
+    // 항상 스택 유지
+    history.pushState({ page: 'app' }, '');
+
     // 모달 열려있으면 닫기
     const openModal = document.querySelector('.modal-overlay.open');
     if (openModal) {
       openModal.classList.remove('open');
-      history.pushState({ page: 'app' }, '');
+      localStorage.removeItem('lastModal');
+      localStorage.removeItem('lastModalType');
       return;
     }
 
@@ -2636,19 +2641,16 @@ async function gdriveRestore() {
     const detailEl = document.getElementById('check-detail');
     if (detailEl && detailEl.style.display !== 'none') {
       closeDetail();
-      history.pushState({ page: 'app' }, '');
       return;
     }
 
     // 탭 이동 (입력이 아니면 이전 탭으로)
     if (_currentTabIdx > 0) {
       switchTab(TAB_ORDER[_currentTabIdx - 1], true);
-      history.pushState({ page: 'app' }, '');
       return;
     }
 
-    // 더 이상 뒤로갈 곳 없음 → 빠르게 2번이면 종료
-    history.pushState({ page: 'app' }, '');
+    // 더 이상 뒤로갈 곳 없음 → 2초 안에 2번 누르면 종료
     if (_backPressedOnce) {
       clearTimeout(_backTimer);
       _backPressedOnce = false;
