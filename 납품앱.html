@@ -914,6 +914,7 @@ window.addEventListener('DOMContentLoaded', () => {
   fillHistoryStack();
 
   window.addEventListener('popstate', function() {
+    toast('popstate 감지됨');
     // 스택 보충은 나중에 (팝업 먼저 처리)
     setTimeout(fillHistoryStack, 100);
 
