@@ -853,12 +853,19 @@ window.addEventListener('DOMContentLoaded', () => {
   const lastTab = localStorage.getItem('lastTab');
   if (lastTab && TAB_ORDER.includes(lastTab)) switchTab(lastTab, true);
 
-  // 검수 상세 복원
+  // 검수 상세 복원 (탭 복원 후에 실행)
   const lastDetailId = localStorage.getItem('lastDetailId');
   if (lastDetailId) {
     const found = state.deliveries.find(d => d.id === lastDetailId);
-    if (found) openDetail(lastDetailId);
-    else localStorage.removeItem('lastDetailId');
+    if (found) {
+      // check-detail 직접 표시 (closeDetail 호출 없이)
+      state.currentDeliveryId = lastDetailId;
+      document.getElementById('check-list-view').style.display = 'none';
+      document.getElementById('check-detail').style.display = 'block';
+      renderDetail();
+    } else {
+      localStorage.removeItem('lastDetailId');
+    }
   }
 
   // 새로고침 알림
@@ -883,7 +890,7 @@ function switchTab(id, fromSwipe) {
     event.currentTarget.classList.add('active');
   }
   localStorage.setItem('lastTab', id);
-  if (id === 'tab-check') { closeDetail(); renderDeliveryList(); renderNaviClientList(); }
+  if (id === 'tab-check') { if (!fromSwipe) closeDetail(); renderDeliveryList(); renderNaviClientList(); }
   if (id === 'tab-history') { renderHistory(); renderStats(); }
   if (id === 'tab-settings') { renderClientList(); renderHistoryClientFilter(); }
 }
