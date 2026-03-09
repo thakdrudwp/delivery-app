@@ -912,8 +912,9 @@ window.addEventListener('DOMContentLoaded', () => {
   history.pushState({ page: 'app' }, '');
 
   window.addEventListener('popstate', function() {
-    // 즉시 스택 복구
-    setTimeout(() => history.pushState({ page: 'app' }, ''), 0);
+    // 스택 즉시 보충
+    history.pushState({ page: 'app' }, '');
+    history.pushState({ page: 'app' }, '');
 
     // 종료 확인 팝업 열려있으면 닫기
     const exitModal = document.getElementById('exit-confirm-modal');
