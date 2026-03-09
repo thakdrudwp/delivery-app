@@ -2603,6 +2603,53 @@ async function gdriveRestore() {
 }
 </script>
 
+<!-- ===== 뒤로가기 처리 ===== -->
+<script>
+(function() {
+  let _backPressedOnce = false;
+  let _backTimer = null;
+
+  // 히스토리 스택 초기화
+  history.pushState({ page: 'app' }, '');
+
+  window.addEventListener('popstate', function(e) {
+    // 모달 열려있으면 닫기
+    const openModal = document.querySelector('.modal-overlay.open');
+    if (openModal) {
+      openModal.classList.remove('open');
+      history.pushState({ page: 'app' }, '');
+      return;
+    }
+
+    // 검수 상세 → 목록으로
+    const detailEl = document.getElementById('check-detail');
+    if (detailEl && detailEl.style.display !== 'none') {
+      closeDetail();
+      history.pushState({ page: 'app' }, '');
+      return;
+    }
+
+    // 탭 이동 (입력이 아니면 이전 탭으로)
+    if (_currentTabIdx > 0) {
+      switchTab(TAB_ORDER[_currentTabIdx - 1], true);
+      history.pushState({ page: 'app' }, '');
+      return;
+    }
+
+    // 더 이상 뒤로갈 곳 없음 → 빠르게 2번이면 종료
+    if (_backPressedOnce) {
+      clearTimeout(_backTimer);
+      history.back(); // 실제 종료
+      return;
+    }
+    _backPressedOnce = true;
+    toast('한 번 더 누르면 종료됩니다');
+    history.pushState({ page: 'app' }, '');
+    _backTimer = setTimeout(() => { _backPressedOnce = false; }, 2000);
+  });
+})();
+</script>
+
 <!-- ===== 스와이프 탭 전환 ===== -->
 <script>
 (function() {
