@@ -637,6 +637,17 @@
 <!-- 토스트 -->
 <div id="toast"></div>
 
+<!-- 종료 확인 팝업 -->
+<div id="exit-confirm-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:28px 24px;width:80%;max-width:320px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div style="font-size:1rem;font-weight:700;color:#111;margin-bottom:20px;">앱을 종료하시겠습니까?</div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="exitCancel()" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid #d1d5db;background:#f3f4f6;font-size:0.95rem;font-weight:700;color:#374151;cursor:pointer;">취소</button>
+      <button onclick="exitConfirm()" style="flex:1;padding:10px;border-radius:8px;border:none;background:#dc2626;font-size:0.95rem;font-weight:700;color:#fff;cursor:pointer;">종료</button>
+    </div>
+  </div>
+</div>
+
 <!-- 개발자 메뉴 모달 -->
 <div class="modal-overlay" id="dev-menu-modal">
   <div class="modal-box">
@@ -891,6 +902,13 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('popstate', function() {
     history.pushState({ page: 'app' }, '');
 
+    // 종료 확인 팝업 열려있으면 닫기 (취소와 동일)
+    const exitModal = document.getElementById('exit-confirm-modal');
+    if (exitModal && exitModal.style.display === 'flex') {
+      exitModal.style.display = 'none';
+      return;
+    }
+
     // 모달 열려있으면 닫기
     const openModal = document.querySelector('.modal-overlay.open');
     if (openModal) {
@@ -913,17 +931,8 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 더 이상 뒤로갈 곳 없음 → 2초 안에 2번 누르면 종료
-    if (_backPressedOnce) {
-      clearTimeout(_backTimer);
-      _backPressedOnce = false;
-      // 브라우저 기본 동작으로 종료 (히스토리 스택 소진)
-      history.go(-2);
-      return;
-    }
-    _backPressedOnce = true;
-    toast('한 번 더 누르면 종료됩니다');
-    _backTimer = setTimeout(() => { _backPressedOnce = false; }, 2000);
+    // 더 이상 뒤로갈 곳 없음 → 종료 확인 팝업
+    showExitConfirm();
   });
 });
 
@@ -2232,6 +2241,21 @@ async function checkDevPin() {
     document.getElementById('dev-pin-error').textContent = '❌ 개발자 전용 메뉴입니다.';
     document.getElementById('dev-pin-input').value = '';
   }
+}
+
+function showExitConfirm() {
+  const el = document.getElementById('exit-confirm-modal');
+  el.style.display = 'flex';
+}
+
+function exitCancel() {
+  document.getElementById('exit-confirm-modal').style.display = 'none';
+}
+
+function exitConfirm() {
+  window.close();
+  // window.close() 안될 경우 히스토리 소진
+  setTimeout(() => { history.go(-(history.length + 1)); }, 100);
 }
 
 function closeModal(id) {
