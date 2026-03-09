@@ -1493,31 +1493,30 @@ function renderNaviClientList() {
     el.innerHTML = `<div style="font-size:0.82rem;color:#9ca3af;text-align:center;padding:8px 0;">주소가 등록된 거래처가 없습니다.</div>`;
     return;
   }
-  const maxUsed = Object.values(naviOrder).length ? Math.max(...Object.values(naviOrder)) : 0;
   el.innerHTML = clients.map(c => {
     const order = naviOrder[c.name] || 0;
-    // 현재 지정된 최대 순서+1 까지 버튼 표시 (최소 1개)
-    const maxBtn = Math.max(maxUsed + 1, 1);
-    const btns = Array.from({length: maxBtn}, (_, i) => i + 1).map(n =>
-      `<button onclick="setNaviOrder('${esc(c.name)}',${n})" style="width:26px;height:26px;border-radius:50%;border:2px solid ${order===n?'#1a56db':'#d1d5db'};background:${order===n?'#1a56db':'#fff'};color:${order===n?'#fff':'#374151'};font-size:0.75rem;font-weight:700;cursor:pointer;">${n}</button>`
-    ).join('');
     return `
-      <div style="padding:6px 0;border-bottom:1px solid #f3f4f6;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:0.85rem;font-weight:600;">${esc(c.name)}${order ? ` <span style="font-size:0.72rem;color:#1a56db;font-weight:700;">(${order}번째)</span>` : ''}</div>
-            <div style="font-size:0.73rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.address)}</div>
-          </div>
+      <div onclick="toggleNaviOrder('${esc(c.name)}')" style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #f3f4f6;cursor:pointer;${order ? 'background:#f0f9ff;' : ''}">
+        <div style="min-width:28px;height:28px;border-radius:50%;background:${order ? '#1a56db' : '#e5e7eb'};color:${order ? '#fff' : '#9ca3af'};font-size:0.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${order || '-'}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.85rem;font-weight:600;">${esc(c.name)}</div>
+          <div style="font-size:0.73rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.address)}</div>
         </div>
-        <div style="display:flex;gap:3px;flex-wrap:wrap;">${btns}</div>
       </div>`;
   }).join('');
 }
 
-function setNaviOrder(name, n) {
-  Object.keys(naviOrder).forEach(k => { if (naviOrder[k] === n) delete naviOrder[k]; });
-  if (naviOrder[name] === n) { delete naviOrder[name]; }
-  else { naviOrder[name] = n; }
+function toggleNaviOrder(name) {
+  if (naviOrder[name]) {
+    // 이미 지정된 경우 → 취소하고 뒤 번호 당기기
+    const removed = naviOrder[name];
+    delete naviOrder[name];
+    Object.keys(naviOrder).forEach(k => { if (naviOrder[k] > removed) naviOrder[k]--; });
+  } else {
+    // 새로 지정 → 현재 최대+1 번호 부여
+    const maxUsed = Object.values(naviOrder).length ? Math.max(...Object.values(naviOrder)) : 0;
+    naviOrder[name] = maxUsed + 1;
+  }
   renderNaviClientList();
 }
 
