@@ -915,9 +915,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('popstate', function() {
     fillHistoryStack();
+    const exitModal = document.getElementById('exit-confirm-modal');
+    if (exitModal && exitModal.classList.contains('open')) {
+      exitModal.classList.remove('open');
+    } else {
+      exitModal.classList.add('open');
+    }
   });
 
-  // 포커스 돌아올 때마다 스택 보충 (백그라운드 갔다 돌아올 때)
+  // 포커스/화면 돌아올 때마다 스택 보충
   window.addEventListener('focus', fillHistoryStack);
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
